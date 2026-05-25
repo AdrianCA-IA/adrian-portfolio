@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-es="Random Forest Predictor — Adrian Cajas" data-en="Random Forest Predictor — Adrian Cajas">Random Forest Predictor — Adrian Cajas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1c2e;--bg2:#122336;--bg3:#1a3355;
+  --accent:#FFB162;--teal:#A0C9CB;--wine:#6B1A34;--wine-light:#d45c7e;
+  --emerald:#34d399;--purple:#a78bfa;
+  --text:#f0f0f0;--muted:#8899aa;
+  --radius:10px;--radius-lg:16px;
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Azeret Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font);scroll-behavior:smooth}
+body{min-height:100vh;padding:24px 24px 60px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(15,23,42,.6);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);z-index:10;margin:-24px -24px 24px}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-back{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:8px;color:var(--teal);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.02em;background:var(--bg3);border:1px solid rgba(255,255,255,.06);transition:all .2s}
+.topbar-back svg{width:18px;height:18px;flex-shrink:0}
+.topbar-back:hover{color:var(--accent);border-color:rgba(255,177,98,.3);background:rgba(255,177,98,.08)}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.06)}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+
+.lang-toggle{display:flex;gap:4px}
+.lang-toggle button{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:var(--font);transition:all .2s}
+.lang-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+header{margin-bottom:32px;max-width:700px}
+header h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;line-height:1.15;letter-spacing:-0.03em}
+header h1 em{font-style:normal;color:var(--accent)}
+header p{color:var(--muted);font-size:.92rem;margin-top:10px;line-height:1.7;max-width:60ch}
+
+/* Layout */
+.rf-layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1000px;margin:0 auto}
+
+/* Skills selector */
+.skills-panel{background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:24px}
+.skills-panel h3{font-size:.95rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.skills-panel h3 span{color:var(--accent)}
+
+.skill-category{margin-bottom:16px}
+.skill-category-name{font-family:var(--mono);font-size:.7rem;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid rgba(255,177,98,.1)}
+
+.skill-toggle{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;transition:opacity .2s}
+.skill-toggle:hover{opacity:.9}
+.skill-toggle input[type="checkbox"]{display:none}
+
+.toggle-track{width:36px;height:20px;background:var(--bg3);border-radius:10px;position:relative;transition:background .2s;border:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.toggle-track::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:all .2s}
+.skill-toggle input:checked+.toggle-track{background:var(--accent);border-color:var(--accent)}
+.skill-toggle input:checked+.toggle-track::after{left:18px;background:var(--bg)}
+
+.skill-name{font-size:.85rem;flex:1}
+.skill-lvl{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+
+/* Results panel */
+.results-panel{background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:24px}
+.results-panel h3{font-size:.95rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.results-panel h3 span{color:var(--emerald)}
+
+.role-result{margin-bottom:16px;padding:16px;background:var(--bg);border:1px solid rgba(160,201,203,.08);border-radius:var(--radius);transition:all .3s var(--ease)}
+.role-result.top{border-color:var(--accent);box-shadow:0 2px 16px rgba(255,177,98,.08)}
+.role-result.highlight{animation:pulse .6s var(--ease)}
+
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.01)}}
+
+.role-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.role-name{font-weight:600;font-size:.92rem}
+.role-pct{font-family:var(--mono);font-size:1.1rem;font-weight:700}
+
+.role-bar-wrap{height:6px;background:rgba(255,255,255,.05);border-radius:3px;margin-bottom:8px;overflow:hidden}
+.role-bar{height:100%;border-radius:3px;transition:width .5s var(--ease)}
+
+.role-desc{color:var(--muted);font-size:.78rem;line-height:1.5}
+.role-skills{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.role-skill{font-size:.68rem;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,.05);color:var(--muted)}
+.role-skill.match{background:rgba(255,177,98,.12);color:var(--accent)}
+.role-skill.missing{background:rgba(212,92,126,.08);color:var(--wine-light);text-decoration:line-through;opacity:.6}
+
+/* Trees visualization */
+.trees-viz{margin-top:20px;padding:16px;background:var(--bg);border-radius:var(--radius);border:1px solid rgba(160,201,203,.08)}
+.trees-label{font-family:var(--mono);font-size:.68rem;color:var(--muted);letter-spacing:.04em;margin-bottom:10px}
+.mini-trees{display:flex;flex-wrap:wrap;gap:6px}
+.mini-tree{width:28px;height:20px;border-radius:3px;transition:all .3s}
+
+/* Info */
+.info-box{max-width:1000px;margin:28px auto 0;background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:24px}
+.info-box h3{font-size:1rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.info-box h3 span{color:var(--accent)}
+.info-box p{color:var(--muted);font-size:.88rem;line-height:1.7}
+
+/* Active count */
+.active-count{font-family:var(--mono);font-size:.78rem;color:var(--teal);margin-bottom:16px;padding:8px 12px;background:rgba(160,201,203,.06);border-radius:var(--radius);text-align:center}
+
+.preset-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.preset-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:5px 12px;border-radius:16px;cursor:pointer;font-size:.72rem;font-family:var(--font);transition:all .2s}
+.preset-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+@media(max-width:768px){
+  .rf-layout{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.05s!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html#playground" class="topbar-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
+      <span data-es="Volver al portfolio" data-en="Back to portfolio">Volver al portfolio</span>
+    </a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-title">Random Forest Predictor</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-toggle">
+      <button class="active" onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1><em>Random Forest</em> Predictor</h1>
+  <p data-es="Simula un Random Forest con 20 árboles de decisión. Activa o desactiva mis habilidades reales y observa cómo cambia la predicción de rol. Cada árbol 'vota' por un rol — el que más votos recibe, gana." data-en="Simulates a Random Forest with 20 decision trees. Toggle my real skills on or off and watch the role prediction change. Each tree 'votes' for a role — the one with most votes wins.">Simula un Random Forest con 20 árboles de decisión. Activa o desactiva mis habilidades reales y observa cómo cambia la predicción de rol. Cada árbol "vota" por un rol — el que más votos recibe, gana.</p>
+</header>
+
+<div class="rf-layout">
+  <div class="skills-panel">
+    <h3><span>🎛️</span> <span data-es="Mis habilidades" data-en="My skills">Mis habilidades</span></h3>
+    <div class="active-count" id="activeCount" data-es="skills activas" data-en="active skills"></div>
+    <div class="preset-btns">
+      <button class="preset-btn" onclick="presetAll()" data-es="Todas" data-en="All">Todas</button>
+      <button class="preset-btn" onclick="presetNone()" data-es="Ninguna" data-en="None">Ninguna</button>
+      <button class="preset-btn" onclick="presetData()" data-es="Solo Data" data-en="Data Only">Solo Data</button>
+      <button class="preset-btn" onclick="presetAI()" data-es="Solo IA" data-en="AI Only">Solo IA</button>
+      <button class="preset-btn" onclick="presetDev()" data-es="Solo Dev" data-en="Dev Only">Solo Dev</button>
+    </div>
+    <div id="skillsList"></div>
+  </div>
+
+  <div class="results-panel">
+    <h3><span>🎯</span> <span data-es="Predicción de rol" data-en="Role prediction">Predicción de rol</span></h3>
+    <div id="results"></div>
+    <div class="trees-viz">
+      <div class="trees-label" data-es="20 ÁRBOLES VOTANDO →" data-en="20 TREES VOTING →">20 ÁRBOLES VOTANDO →</div>
+      <div class="mini-trees" id="miniTrees"></div>
+    </div>
+  </div>
+</div>
+
+<div class="info-box">
+  <h3><span>💡</span> <span data-es="¿Qué dice esto de mí?" data-en="What does this say about me?">¿Qué dice esto de mí?</span></h3>
+  <p data-es="Un Random Forest funciona haciendo que múltiples árboles de decisión 'voten'. Cada árbol ve un subconjunto aleatorio de features (mis skills) y da su predicción. El resultado final es la mayoría. Aquí, las features son mis habilidades reales y los niveles que tengo en cada una. Prueba a quitar skills y verás cómo mi perfil cambia: sin Python ni IICS dejo de ser Data Engineer; sin LLMs ni RAG, pierdo la componente de IA. Cada skill que tengo contribuye a definir quién soy profesionalmente." data-en="A Random Forest works by having multiple decision trees 'vote'. Each tree sees a random subset of features (my skills) and gives its prediction. The final result is the majority. Here, the features are my real skills and my levels in each. Try removing skills and watch how my profile shifts: without Python or IICS I stop being a Data Engineer; without LLMs or RAG, I lose the AI component. Every skill I have contributes to defining who I am professionally.">Un Random Forest funciona haciendo que múltiples árboles de decisión "voten". Cada árbol ve un subconjunto aleatorio de features (mis skills) y da su predicción. El resultado final es la mayoría. Aquí, las features son mis habilidades reales y los niveles que tengo en cada una. Prueba a quitar skills y verás cómo mi perfil cambia: sin Python ni IICS dejo de ser Data Engineer; sin LLMs ni RAG, pierdo la componente de IA. Cada skill que tengo contribuye a definir quién soy profesionalmente.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+let currentLang = (function(){ try{ var s=localStorage.getItem('portfolio-lang'); return (s==='en')?'en':'es'; }catch(e){ return 'es'; } })();
+
+/* ══════ SKILLS DATA ══════ */
+const skillsData = [
+  {id:'iics',name:'Informatica Cloud / IICS',lvl:85,cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'},tags:['data','cloud']},
+  {id:'aws',name:'AWS',lvl:65,cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'},tags:['data','cloud','dev']},
+  {id:'spark',name:'Spark / Scala',lvl:45,cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'},tags:['data']},
+  {id:'hdfs',name:'HDFS / Hive',lvl:50,cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'},tags:['data']},
+  {id:'llms',name:'LLMs',lvl:35,cat:{es:'IA & Agentes',en:'AI & Agents'},tags:['ai']},
+  {id:'aiapi',name:'APIs de IA',lvl:40,cat:{es:'IA & Agentes',en:'AI & Agents'},tags:['ai','dev']},
+  {id:'agents',name:'Multi-agentes',lvl:25,cat:{es:'IA & Agentes',en:'AI & Agents'},tags:['ai']},
+  {id:'ollama',name:'Ollama',lvl:30,cat:{es:'IA & Agentes',en:'AI & Agents'},tags:['ai']},
+  {id:'rag',name:'RAG',lvl:25,cat:{es:'IA & Agentes',en:'AI & Agents'},tags:['ai','data']},
+  {id:'sql',name:'SQL',lvl:70,cat:{es:'Data Insights',en:'Data Insights'},tags:['data']},
+  {id:'nosql',name:'NoSQL',lvl:65,cat:{es:'Data Insights',en:'Data Insights'},tags:['data']},
+  {id:'pbi',name:'Power BI',lvl:50,cat:{es:'Data Insights',en:'Data Insights'},tags:['data','viz']},
+  {id:'pquery',name:'Power Query',lvl:55,cat:{es:'Data Insights',en:'Data Insights'},tags:['data']},
+  {id:'python',name:'Python',lvl:85,cat:{es:'Automatización',en:'Automation'},tags:['data','ai','dev']},
+  {id:'pauto',name:'Power Automate',lvl:40,cat:{es:'Automatización',en:'Automation'},tags:['data']},
+  {id:'controlm',name:'Control-M',lvl:65,cat:{es:'Automatización',en:'Automation'},tags:['data']},
+  {id:'docker',name:'Docker',lvl:55,cat:{es:'Automatización',en:'Automation'},tags:['dev','cloud']},
+  {id:'js',name:'JavaScript',lvl:60,cat:{es:'Desarrollo',en:'Development'},tags:['dev']},
+  {id:'html',name:'HTML/CSS',lvl:70,cat:{es:'Desarrollo',en:'Development'},tags:['dev']},
+  {id:'git',name:'Git',lvl:75,cat:{es:'Desarrollo',en:'Development'},tags:['dev']},
+  {id:'rest',name:'REST APIs',lvl:70,cat:{es:'Desarrollo',en:'Development'},tags:['dev','data']}
+];
+
+/* ══════ ROLES ══════ */
+const roles = [
+  {
+    id:'de',
+    name:{es:'Data Engineer',en:'Data Engineer'},
+    color:'#FFB162',
+    desc:{es:'Diseña y mantiene pipelines de datos, ETL y arquitectura de datos en cloud.',en:'Designs and maintains data pipelines, ETL and cloud data architecture.'},
+    keySkills:['iics','aws','spark','hdfs','sql','nosql','python','controlm','docker'],
+    weights:{iics:3,aws:2,spark:2,hdfs:1.5,sql:2,nosql:1.5,python:2,controlm:2,docker:1,pquery:1,rest:1}
+  },
+  {
+    id:'ai',
+    name:{es:'AI Engineer',en:'AI Engineer'},
+    color:'#A0C9CB',
+    desc:{es:'Construye sistemas de IA, integra LLMs y diseña flujos de agentes inteligentes.',en:'Builds AI systems, integrates LLMs and designs intelligent agent workflows.'},
+    keySkills:['llms','aiapi','agents','ollama','rag','python'],
+    weights:{llms:3,aiapi:3,agents:3,ollama:2,rag:3,python:2,docker:1,rest:1,aws:1}
+  },
+  {
+    id:'da',
+    name:{es:'Data Analyst',en:'Data Analyst'},
+    color:'#d45c7e',
+    desc:{es:'Analiza datos, crea dashboards y genera insights para la toma de decisiones.',en:'Analyzes data, creates dashboards and generates insights for decision making.'},
+    keySkills:['sql','pbi','pquery','python','nosql'],
+    weights:{sql:3,pbi:3,pquery:3,python:1.5,nosql:1,pauto:1.5,html:0.5}
+  },
+  {
+    id:'fsd',
+    name:{es:'Full-Stack Developer',en:'Full-Stack Developer'},
+    color:'#34d399',
+    desc:{es:'Desarrolla aplicaciones web completas, frontend y backend.',en:'Develops complete web applications, frontend and backend.'},
+    keySkills:['js','html','git','rest','python','docker'],
+    weights:{js:3,html:3,git:2,rest:3,python:2,docker:2,aws:1.5,nosql:1}
+  },
+  {
+    id:'mle',
+    name:{es:'ML Engineer',en:'ML Engineer'},
+    color:'#a78bfa',
+    desc:{es:'Pone modelos de ML en producción con pipelines escalables.',en:'Puts ML models into production with scalable pipelines.'},
+    keySkills:['python','spark','docker','aws','llms','rag'],
+    weights:{python:3,spark:2.5,docker:2,aws:2,llms:2,rag:2,sql:1,git:1.5,rest:1}
+  }
+];
+
+const N_TREES = 20;
+let activeSkills = new Set(skillsData.map(s=>s.id));
+
+/* ══════ BUILD SKILLS LIST ══════ */
+function buildSkillsList(){
+  const container = document.getElementById('skillsList');
+  container.innerHTML='';
+
+  // Group by category
+  const cats = {};
+  skillsData.forEach(s=>{
+    const catName=s.cat[currentLang];
+    if(!cats[catName]) cats[catName]={skills:[],catObj:s.cat};
+    cats[catName].skills.push(s);
+  });
+
+  Object.entries(cats).forEach(([catName,cat])=>{
+    const div = document.createElement('div');
+    div.className='skill-category';
+    div.innerHTML='<div class="skill-category-name" data-es="'+cat.catObj.es+'" data-en="'+cat.catObj.en+'">'+catName+'</div>';
+
+    cat.skills.forEach(skill=>{
+      const label = document.createElement('label');
+      label.className='skill-toggle';
+      label.innerHTML=
+        '<input type="checkbox" '+(activeSkills.has(skill.id)?'checked':'')+' data-skill="'+skill.id+'">'+
+        '<div class="toggle-track"></div>'+
+        '<span class="skill-name">'+skill.name+'</span>'+
+        '<span class="skill-lvl">'+skill.lvl+'%</span>';
+      label.querySelector('input').addEventListener('change',function(){
+        if(this.checked) activeSkills.add(skill.id);
+        else activeSkills.delete(skill.id);
+        predict();
+      });
+      div.appendChild(label);
+    });
+
+    container.appendChild(div);
+  });
+
+  updateCount();
+}
+
+function updateCount(){
+  const el=document.getElementById('activeCount');
+  el.textContent=activeSkills.size+'/'+skillsData.length+' '+(currentLang==='es'?'skills activas':'active skills');
+}
+
+/* ══════ RANDOM FOREST SIMULATION ══════ */
+function simulateTree(treeIndex){
+  // Each tree sees a random subset of features (bootstrap)
+  const seed = treeIndex * 7 + 3; // deterministic per tree
+  const featureCount = Math.max(3, Math.floor(Math.sqrt(skillsData.length)));
+
+  // Select random features for this tree
+  const indices = [];
+  let s = seed;
+  while(indices.length < featureCount){
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const idx = s % skillsData.length;
+    if(!indices.includes(idx)) indices.push(idx);
+  }
+
+  const treeSkills = indices.map(i=>skillsData[i]);
+
+  // Score each role based on this tree's feature subset
+  const scores = roles.map(role=>{
+    let score = 0;
+    treeSkills.forEach(skill=>{
+      if(!activeSkills.has(skill.id)) return;
+      const weight = role.weights[skill.id] || 0;
+      score += weight * (skill.lvl/100);
+    });
+    // Add some noise per tree for variety
+    const noise = ((treeIndex * 31 + roles.indexOf(role) * 17) % 10) / 100;
+    return score + noise;
+  });
+
+  // Tree votes for highest-scoring role
+  let maxScore = -1, vote = 0;
+  scores.forEach((s,i)=>{if(s>maxScore){maxScore=s;vote=i;}});
+  return vote;
+}
+
+function predict(){
+  updateCount();
+
+  // Run all trees
+  const votes = Array(roles.length).fill(0);
+  const treeVotes = [];
+
+  for(let t=0;t<N_TREES;t++){
+    const vote = simulateTree(t);
+    votes[vote]++;
+    treeVotes.push(vote);
+  }
+
+  // Calculate percentages
+  const results = roles.map((role,i)=>({
+    role,
+    votes:votes[i],
+    pct:Math.round((votes[i]/N_TREES)*100)
+  }));
+
+  // Sort by votes descending
+  results.sort((a,b)=>b.votes-a.votes);
+
+  // Render results
+  const container = document.getElementById('results');
+  container.innerHTML='';
+
+  results.forEach((r,i)=>{
+    const div = document.createElement('div');
+    div.className='role-result'+(i===0?' top':'');
+
+    const matchedSkills = r.role.keySkills.filter(id=>activeSkills.has(id));
+    const missingSkills = r.role.keySkills.filter(id=>!activeSkills.has(id));
+
+    div.innerHTML=
+      '<div class="role-header">'+
+        '<span class="role-name" data-es="'+r.role.name.es+'" data-en="'+r.role.name.en+'">'+
+          (i===0?'🏆 ':'')+r.role.name[currentLang]+
+        '</span>'+
+        '<span class="role-pct" style="color:'+r.role.color+'">'+r.pct+'%</span>'+
+      '</div>'+
+      '<div class="role-bar-wrap"><div class="role-bar" style="width:'+r.pct+'%;background:'+r.role.color+'"></div></div>'+
+      '<div class="role-desc" data-es="'+r.role.desc.es+'" data-en="'+r.role.desc.en+'">'+r.role.desc[currentLang]+'</div>'+
+      '<div class="role-skills">'+
+        matchedSkills.map(id=>{
+          const s=skillsData.find(sk=>sk.id===id);
+          return '<span class="role-skill match">'+s.name+'</span>';
+        }).join('')+
+        missingSkills.map(id=>{
+          const s=skillsData.find(sk=>sk.id===id);
+          return '<span class="role-skill missing">'+s.name+'</span>';
+        }).join('')+
+      '</div>';
+
+    container.appendChild(div);
+  });
+
+  // Mini trees visualization
+  const treesContainer = document.getElementById('miniTrees');
+  treesContainer.innerHTML='';
+  treeVotes.forEach((vote,i)=>{
+    const div = document.createElement('div');
+    div.className='mini-tree';
+    div.style.background=roles[vote].color;
+    div.style.opacity='0.6';
+    div.title=(currentLang==='es'?'Árbol ':'Tree ')+(i+1)+': '+roles[vote].name[currentLang];
+    treesContainer.appendChild(div);
+  });
+}
+
+/* ══════ PRESETS ══════ */
+function presetAll(){
+  activeSkills = new Set(skillsData.map(s=>s.id));
+  buildSkillsList(); predict();
+}
+function presetNone(){
+  activeSkills = new Set();
+  buildSkillsList(); predict();
+}
+function presetData(){
+  activeSkills = new Set(skillsData.filter(s=>s.tags.includes('data')).map(s=>s.id));
+  buildSkillsList(); predict();
+}
+function presetAI(){
+  activeSkills = new Set(skillsData.filter(s=>s.tags.includes('ai')).map(s=>s.id));
+  buildSkillsList(); predict();
+}
+function presetDev(){
+  activeSkills = new Set(skillsData.filter(s=>s.tags.includes('dev')).map(s=>s.id));
+  buildSkillsList(); predict();
+}
+
+window.presetAll=presetAll;
+window.presetNone=presetNone;
+window.presetData=presetData;
+window.presetAI=presetAI;
+window.presetDev=presetDev;
+
+/* ══════ LANGUAGE ══════ */
+function setLang(lang){
+  currentLang=lang;
+  try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.lang-toggle button:nth-child('+(lang==='es'?'1':'2')+')').classList.add('active');
+  document.querySelectorAll('[data-es][data-en]').forEach(el=>{
+    const t=el.getAttribute('data-'+lang);
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=t;
+    else if(el.children.length>0){
+      for(let i=0;i<el.childNodes.length;i++){
+        const n=el.childNodes[i];
+        if(n.nodeType===Node.TEXT_NODE && n.textContent.trim()!=='') n.textContent=t;
+      }
+    } else el.textContent=t;
+  });
+  buildSkillsList();
+  predict();
+}
+window.setLang = setLang;
+
+/* ====== INIT ====== */
+buildSkillsList();
+predict();
+if(currentLang!=='es') setLang(currentLang);
+
+})();
+</script>
+</body>
+</html>

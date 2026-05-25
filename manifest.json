@@ -1,0 +1,16 @@
+{
+  "name": "Adrian Cajas — Data Engineer & AI",
+  "short_name": "Adrian Cajas",
+  "description": "Portfolio interactivo de Adrian Cajas. Ingeniero de Datos e IA.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d1c2e",
+  "theme_color": "#0d1c2e",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-es="Árbol de Decisión de Carrera — Adrian Cajas" data-en="Career Decision Tree — Adrian Cajas">Árbol de Decisión de Carrera — Adrian Cajas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1c2e;--bg2:#122336;--bg3:#1a3355;
+  --accent:#FFB162;--teal:#A0C9CB;--wine:#6B1A34;--wine-light:#d45c7e;
+  --emerald:#34d399;--purple:#a78bfa;
+  --text:#f0f0f0;--muted:#8899aa;
+  --radius:10px;--radius-lg:16px;
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Azeret Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font);scroll-behavior:smooth}
+body{min-height:100vh;padding:24px 24px 60px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(15,23,42,.6);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);z-index:10;margin:-24px -24px 24px}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-back{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:8px;color:var(--teal);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.02em;background:var(--bg3);border:1px solid rgba(255,255,255,.06);transition:all .2s}
+.topbar-back svg{width:18px;height:18px;flex-shrink:0}
+.topbar-back:hover{color:var(--accent);border-color:rgba(255,177,98,.3);background:rgba(255,177,98,.08)}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.06)}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+
+.lang-toggle{display:flex;gap:4px}
+.lang-toggle button{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:var(--font);transition:all .2s}
+.lang-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+header{margin-bottom:32px;max-width:700px}
+header h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;line-height:1.15;letter-spacing:-0.03em}
+header h1 em{font-style:normal;color:var(--accent)}
+header p{color:var(--muted);font-size:.92rem;margin-top:10px;line-height:1.7;max-width:60ch}
+
+/* Tree */
+.tree-container{max-width:1100px;margin:0 auto;overflow-x:auto;padding-bottom:24px}
+
+.tree-node{
+  background:var(--bg2);border:2px solid rgba(160,201,203,.15);border-radius:var(--radius-lg);
+  padding:16px 20px;cursor:pointer;transition:all .4s var(--ease);
+  text-align:center;min-width:150px;max-width:220px;position:relative;
+  opacity:0;transform:translateY(20px) scale(.95);
+}
+.tree-node.vis{opacity:1;transform:translateY(0) scale(1)}
+.tree-node:hover{border-color:var(--accent);transform:translateY(-3px) scale(1.03);box-shadow:0 8px 30px rgba(255,177,98,.12)}
+.tree-node.active{border-color:var(--accent);box-shadow:0 4px 24px rgba(255,177,98,.15);animation:nodeGlow 2s ease-in-out infinite alternate}
+.tree-node.chosen{border-color:var(--emerald);box-shadow:0 4px 24px rgba(52,211,153,.15);animation:nodeGlowGreen 2s ease-in-out infinite alternate}
+.tree-node.not-chosen{opacity:.25;transform:translateY(0) scale(.92);filter:grayscale(.5)}
+.tree-node.gap-node{border-style:dashed;border-color:rgba(212,92,126,.3)}
+.tree-node.gap-node.active{border-color:var(--wine-light);animation:nodeGlowWine 2s ease-in-out infinite alternate}
+
+@keyframes nodeGlow{
+  0%{box-shadow:0 4px 24px rgba(255,177,98,.1)}
+  100%{box-shadow:0 4px 32px rgba(255,177,98,.25)}
+}
+@keyframes nodeGlowGreen{
+  0%{box-shadow:0 4px 24px rgba(52,211,153,.1)}
+  100%{box-shadow:0 4px 32px rgba(52,211,153,.25)}
+}
+@keyframes nodeGlowWine{
+  0%{box-shadow:0 4px 24px rgba(212,92,126,.1)}
+  100%{box-shadow:0 4px 32px rgba(212,92,126,.25)}
+}
+
+.node-question{font-family:var(--mono);font-size:.62rem;color:var(--accent);letter-spacing:.05em;text-transform:uppercase;margin-bottom:4px}
+.node-title{font-weight:600;font-size:.9rem;letter-spacing:-.01em;margin-bottom:3px}
+.node-desc{color:var(--muted);font-size:.75rem;line-height:1.5}
+.node-year{font-family:var(--mono);font-size:.68rem;color:var(--emerald);margin-top:6px}
+.node-icon{font-size:1.4rem;margin-bottom:6px;display:inline-block;animation:iconFloat 3s ease-in-out infinite}
+
+@keyframes iconFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* Vertical layout */
+.level{display:flex;justify-content:center;gap:14px;margin-bottom:0}
+.branch{display:flex;flex-direction:column;align-items:center}
+.connector{width:2px;height:34px;margin:0 auto;position:relative;overflow:hidden;background:rgba(160,201,203,.08)}
+.connector::after{
+  content:'';position:absolute;top:-100%;left:0;width:100%;height:100%;
+  background:linear-gradient(to bottom,transparent,var(--teal),transparent);
+  animation:flowDown 2s ease-in-out infinite;
+}
+.connector.chosen-path{background:rgba(52,211,153,.1)}
+.connector.chosen-path::after{background:linear-gradient(to bottom,transparent,var(--emerald),transparent)}
+.children{display:flex;gap:14px;justify-content:center}
+
+@keyframes flowDown{0%{top:-100%}100%{top:200%}}
+
+/* Result */
+.result-box{max-width:600px;margin:32px auto 0;background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:28px;opacity:0;transform:translateY(20px) scale(.97);transition:all .5s var(--ease)}
+.result-box.show{opacity:1;transform:none}
+.result-box h3{font-size:1.1rem;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.result-box h3 .icon{font-size:1.3rem;animation:iconFloat 2s ease-in-out infinite}
+.result-box p{color:var(--muted);font-size:.88rem;line-height:1.7}
+.result-tag{display:inline-block;background:rgba(255,177,98,.12);color:var(--accent);padding:3px 10px;border-radius:12px;font-size:.75rem;font-family:var(--mono);margin:8px 4px 0 0;opacity:0;animation:tagFadeIn .4s var(--ease) forwards}
+.result-tag:nth-child(1){animation-delay:.1s}
+.result-tag:nth-child(2){animation-delay:.15s}
+.result-tag:nth-child(3){animation-delay:.2s}
+.result-tag:nth-child(4){animation-delay:.25s}
+.result-tag:nth-child(5){animation-delay:.3s}
+.result-tag:nth-child(6){animation-delay:.35s}
+.result-tag:nth-child(7){animation-delay:.4s}
+.result-tag:nth-child(8){animation-delay:.45s}
+
+@keyframes tagFadeIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:none}}
+
+.reset-btn{display:block;margin:20px auto 0;background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--teal);padding:8px 24px;border-radius:20px;cursor:pointer;font-size:.85rem;font-family:var(--font);transition:all .2s}
+.reset-btn:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.05)}
+
+/* Path display */
+.path-display{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap;min-height:28px}
+.path-step{font-size:.72rem;font-family:var(--mono);color:var(--teal);padding:3px 10px;border-radius:12px;background:rgba(160,201,203,.08);animation:pathSlideIn .3s var(--ease) forwards}
+.path-step.is-chosen{border:1px solid var(--emerald);color:var(--emerald)}
+.path-step.is-gap{border:1px dashed var(--wine-light);color:var(--wine-light)}
+.path-arrow{color:var(--muted);font-size:.7rem;animation:pathSlideIn .2s var(--ease) forwards}
+
+@keyframes pathSlideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+
+/* Particles background */
+.tree-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1}
+
+/* Info */
+.info-box{max-width:1100px;margin:28px auto 0;background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:24px}
+.info-box h3{font-size:1rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.info-box h3 span{color:var(--accent)}
+.info-box p{color:var(--muted);font-size:.88rem;line-height:1.7}
+
+@media(max-width:768px){
+  .tree-node{min-width:110px;max-width:150px;padding:10px 12px}
+  .node-title{font-size:.78rem}
+  .node-desc{font-size:.68rem}
+  .children{gap:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .tree-node,.connector::after,.node-icon,.result-tag,.path-step,.path-arrow{animation:none!important}
+  .tree-node{opacity:1;transform:none}
+  .result-tag{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html#playground" class="topbar-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
+      <span data-es="Volver al portfolio" data-en="Back to portfolio">Volver al portfolio</span>
+    </a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-title" data-es="Árbol de Decisión de Carrera" data-en="Career Decision Tree">Árbol de Decisión de Carrera</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-toggle">
+      <button class="active" onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1><span data-es="Árbol de" data-en="Career">Árbol de</span> <em data-es="Decisión" data-en="Decision">Decisión</em> <span data-es="de Carrera" data-en="Tree">de Carrera</span></h1>
+  <p data-es="Mi carrera profesional como un árbol de decisión: cada bifurcación representa una elección real que tomé. Haz clic en los nodos para recorrer mi camino — o explorar los caminos alternativos que no tomé." data-en="My career as a decision tree: each fork represents a real choice I made. Click the nodes to walk my path — or explore the alternative paths I didn't take.">Mi carrera profesional como un árbol de decisión: cada bifurcación representa una elección real que tomé. Haz clic en los nodos para recorrer mi camino — o explorar los caminos alternativos que no tomé.</p>
+</header>
+
+<div class="path-display" id="pathDisplay"></div>
+
+<div class="tree-container" id="treeContainer"></div>
+
+<div class="result-box" id="resultBox">
+  <h3><span class="icon">🎯</span> <span id="resultTitle"></span></h3>
+  <p id="resultText"></p>
+  <div id="resultTags"></div>
+  <button class="reset-btn" onclick="resetTree()" data-es="Reiniciar árbol" data-en="Reset tree">Reiniciar árbol</button>
+</div>
+
+<div class="info-box">
+  <h3><span>💡</span> <span data-es="¿Qué dice esto de mí?" data-en="What does this say about me?">¿Qué dice esto de mí?</span></h3>
+  <p data-es="Los árboles de decisión no solo clasifican datos — también cuentan historias. Cada nodo de mi carrera tiene un 'feature' que evaluó: ¿qué me apasionaba más? ¿dónde veía futuro? ¿qué resolvía problemas reales? El camino verde marca las decisiones que tomé. Los caminos grises muestran alternativas válidas que no seguí. También hay un periodo autodidacta — sin empleo formal pero estudiando Spark e IA predictiva por cuenta propia, porque la curiosidad no para aunque las circunstancias cambien. El resultado final (Data Engineer + IA) no fue casualidad: fue una secuencia de decisiones informadas." data-en="Decision trees don't just classify data — they tell stories. Each node in my career has a 'feature' that was evaluated: what was I passionate about? Where did I see a future? What solved real problems? The green path marks the decisions I made. The gray paths show valid alternatives I didn't pursue. There's also a self-taught period — no formal job but studying Spark and predictive AI on my own, because curiosity doesn't stop even when circumstances change. The final result (Data Engineer + AI) wasn't random: it was a sequence of informed decisions.">Los árboles de decisión no solo clasifican datos — también cuentan historias. Cada nodo de mi carrera tiene un 'feature' que evaluó: ¿qué me apasionaba más? ¿dónde veía futuro? ¿qué resolvía problemas reales? El camino verde marca las decisiones que tomé. Los caminos grises muestran alternativas válidas que no seguí. También hay un periodo autodidacta — sin empleo formal pero estudiando Spark e IA predictiva por cuenta propia, porque la curiosidad no para aunque las circunstancias cambien. El resultado final (Data Engineer + IA) no fue casualidad: fue una secuencia de decisiones informadas.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+let currentLang = 'es';
+
+/* ══════ TREE DATA — REAL CAREER ══════ */
+const tree = {
+  id:'root',
+  question:{es:'PUNTO DE PARTIDA',en:'STARTING POINT'},
+  icon:'📚',
+  title:{es:'FP Superior DAM',en:'Higher Vocational DAM'},
+  desc:{es:'Formación Profesional: Desarrollo de Aplicaciones Multiplataforma',en:'Vocational Training: Cross-platform App Development'},
+  year:'2016 — 2018',
+  chosen:true,
+  children:[
+    {
+      id:'frontend',
+      question:{es:'PRIMER EMPLEO: ¿QUÉ CAMINO?',en:'FIRST JOB: WHICH PATH?'},
+      icon:'🎨',
+      title:{es:'Desarrollo frontend',en:'Frontend development'},
+      desc:{es:'Crear interfaces y apps de usuario',en:'Build user interfaces and apps'},
+      year:'2018',
+      chosen:false,
+      result:{
+        title:{es:'Frontend Developer',en:'Frontend Developer'},
+        text:{es:'Sabía HTML, CSS, Java, PHP del FP — podría haber ido por frontend puro. Pero en mis prácticas en Jump Data Driven descubrí algo que me gustó más: los datos y la nube.',en:'I knew HTML, CSS, Java, PHP from my vocational training — I could have gone pure frontend. But during my internship at Jump Data Driven I discovered something I liked more: data and cloud.'},
+        tags:['HTML/CSS','Java','PHP','JavaScript']
+      }
+    },
+    {
+      id:'qa-cloud',
+      question:{es:'PRIMER EMPLEO: ¿QUÉ CAMINO?',en:'FIRST JOB: WHICH PATH?'},
+      icon:'🧪',
+      title:{es:'QA & Cloud (Prácticas)',en:'QA & Cloud (Internship)'},
+      desc:{es:'Jump Data Driven — Testing + AWS + IA',en:'Jump Data Driven — Testing + AWS + AI'},
+      year:'Mar 2018 — Abr 2019',
+      chosen:true,
+      children:[
+        {
+          id:'qa-pure',
+          question:{es:'¿SEGUIR EN QA O PIVOTAR?',en:'STAY IN QA OR PIVOT?'},
+          icon:'🔍',
+          title:{es:'Especialista QA',en:'QA Specialist'},
+          desc:{es:'Seguir en testing y automatización de pruebas',en:'Continue in testing and test automation'},
+          year:'2019',
+          chosen:false,
+          result:{
+            title:{es:'QA Engineer / SDET',en:'QA Engineer / SDET'},
+            text:{es:'Ruby + Selenium me enseñaron mucho de automatización, pero lo que me enganchó fue trabajar con AWS y los algoritmos de IA. Quería estar del lado de los datos, no solo validarlos.',en:'Ruby + Selenium taught me a lot about automation, but what hooked me was working with AWS and AI algorithms. I wanted to be on the data side, not just validating it.'},
+            tags:['Ruby','Selenium','Testing','CI/CD']
+          }
+        },
+        {
+          id:'data-analyst',
+          question:{es:'¿SEGUIR EN QA O PIVOTAR?',en:'STAY IN QA OR PIVOT?'},
+          icon:'📊',
+          title:{es:'Analista de Datos',en:'Data Analyst'},
+          desc:{es:'Stratesys — Pipelines ETL + Informatica Cloud',en:'Stratesys — ETL Pipelines + Informatica Cloud'},
+          year:'Abr 2019 — Abr 2020',
+          chosen:true,
+          children:[
+            {
+              id:'bi-analyst',
+              question:{es:'¿ANALISTA BI O INGENIERO ETL?',en:'BI ANALYST OR ETL ENGINEER?'},
+              icon:'📈',
+              title:{es:'Business Intelligence',en:'Business Intelligence'},
+              desc:{es:'Dashboards, reporting, solo visualización',en:'Dashboards, reporting, visualization only'},
+              year:'2020',
+              chosen:false,
+              result:{
+                title:{es:'BI Analyst',en:'BI Analyst'},
+                text:{es:'Power BI y reporting estaban bien, pero yo quería mover los datos, no solo pintarlos. Me gustaba construir los pipelines, resolver las dependencias, automatizar.',en:'Power BI and reporting were fine, but I wanted to move data, not just visualize it. I liked building pipelines, resolving dependencies, automating.'},
+                tags:['Power BI','DAX','Excel','Reporting']
+              }
+            },
+            {
+              id:'etl-dev',
+              question:{es:'¿ANALISTA BI O INGENIERO ETL?',en:'BI ANALYST OR ETL ENGINEER?'},
+              icon:'⚙️',
+              title:{es:'Desarrollador ETL',en:'ETL Developer'},
+              desc:{es:'VASS — Migración masiva Salesforce con Informatica Cloud',en:'VASS — Massive Salesforce migration with Informatica Cloud'},
+              year:'Abr — Nov 2020',
+              chosen:true,
+              children:[
+                {
+                  id:'gap',
+                  question:{es:'LA VIDA NO ES LINEAL',en:'LIFE ISN\'T LINEAR'},
+                  icon:'📖',
+                  title:{es:'Aprendizaje autodidacta',en:'Self-taught learning'},
+                  desc:{es:'Sin empleo formal, pero estudiando por mi cuenta: Spark, IA predictiva, Machine Learning. La curiosidad no para.',en:'No formal job, but studying on my own: Spark, predictive AI, Machine Learning. Curiosity never stops.'},
+                  year:'Nov 2020 — Feb 2022',
+                  chosen:true,
+                  isGap:true,
+                  children:[
+                    {
+                      id:'change-career',
+                      question:{es:'¿VOLVER O CAMBIAR?',en:'COME BACK OR CHANGE?'},
+                      icon:'🔄',
+                      title:{es:'Cambiar de sector',en:'Change sectors'},
+                      desc:{es:'Dejar tech y probar otra cosa',en:'Leave tech and try something else'},
+                      year:'2022',
+                      chosen:false,
+                      result:{
+                        title:{es:'Otro camino',en:'Another path'},
+                        text:{es:'Podría haber dejado tech, pero ese tiempo estudiando Spark e IA predictiva por mi cuenta me confirmó que esto es lo mío. Volví con más base y más hambre.',en:'I could have left tech, but that time studying Spark and predictive AI on my own confirmed this is my thing. I came back with a stronger foundation and more hunger.'},
+                        tags:['Reset','Autodidacta','Resiliencia']
+                      }
+                    },
+                    {
+                      id:'comeback-etl',
+                      question:{es:'¿VOLVER O CAMBIAR?',en:'COME BACK OR CHANGE?'},
+                      icon:'🚀',
+                      title:{es:'Volver más fuerte',en:'Come back stronger'},
+                      desc:{es:'Pixie — ETL con IICS, Oracle → Salesforce',en:'Pixie — ETL with IICS, Oracle → Salesforce'},
+                      year:'Feb — Jul 2022',
+                      chosen:true,
+                      children:[
+                        {
+                          id:'stay-etl',
+                          question:{es:'¿ESPECIALIZARSE O ESCALAR?',en:'SPECIALIZE OR SCALE UP?'},
+                          icon:'🔧',
+                          title:{es:'Solo ETL / integración',en:'Just ETL / integration'},
+                          desc:{es:'Quedarse en IICS y Salesforce',en:'Stay with IICS and Salesforce'},
+                          year:'2022',
+                          chosen:false,
+                          result:{
+                            title:{es:'Senior ETL Developer',en:'Senior ETL Developer'},
+                            text:{es:'IICS y Salesforce son mi zona fuerte — podría haberme quedado solo ahí. Pero CAS Training me dio la oportunidad de escalar: Scala, HDFS, Spark, Big Data de verdad.',en:'IICS and Salesforce are my strong zone — I could have stayed there. But CAS Training gave me the chance to scale up: Scala, HDFS, Spark, real Big Data.'},
+                            tags:['IICS','Informatica Cloud','Salesforce','ETL']
+                          }
+                        },
+                        {
+                          id:'bigdata',
+                          question:{es:'¿ESPECIALIZARSE O ESCALAR?',en:'SPECIALIZE OR SCALE UP?'},
+                          icon:'📡',
+                          title:{es:'Big Data Developer',en:'Big Data Developer'},
+                          desc:{es:'CAS Training — Scala, HDFS, Spark, Control-M',en:'CAS Training — Scala, HDFS, Spark, Control-M'},
+                          year:'Jul 2022 — Feb 2025',
+                          chosen:true,
+                          children:[
+                            {
+                              id:'pure-bigdata',
+                              question:{es:'¿HACIA DÓNDE EVOLUCIONAR?',en:'WHERE TO EVOLVE?'},
+                              icon:'💾',
+                              title:{es:'Puro Big Data / infra',en:'Pure Big Data / infra'},
+                              desc:{es:'Solo pipelines, Hadoop, infraestructura',en:'Only pipelines, Hadoop, infrastructure'},
+                              year:'2025',
+                              chosen:false,
+                              result:{
+                                title:{es:'Senior Big Data Engineer',en:'Senior Big Data Engineer'},
+                                text:{es:'Scala + HDFS + Control-M me dieron una base sólida. Pero entonces llegaron los LLMs y todo cambió — vi que podía combinar mi experiencia en datos con IA para crear algo nuevo.',en:'Scala + HDFS + Control-M gave me a solid foundation. But then LLMs arrived and everything changed — I saw I could combine my data experience with AI to create something new.'},
+                                tags:['Scala','HDFS','Spark','Control-M','Hadoop']
+                              }
+                            },
+                            {
+                              id:'ai-rpa',
+                              question:{es:'¿HACIA DÓNDE EVOLUCIONAR?',en:'WHERE TO EVOLVE?'},
+                              icon:'🤖',
+                              title:{es:'IA + RPA + Datos',en:'AI + RPA + Data'},
+                              desc:{es:'Torres y Carrera — LLMs, agentes, automatización inteligente',en:'Torres y Carrera — LLMs, agents, intelligent automation'},
+                              year:'Nov 2025 — Actual',
+                              chosen:true,
+                              result:{
+                                title:{es:'Data Analyst & AI Solutions — Presente',en:'Data Analyst & AI Solutions — Present'},
+                                text:{es:'Aquí estoy hoy: combinando +7 años de experiencia en pipelines de datos con LLMs (Claude, Gemini, ChatGPT), multi-agentes, vibe coding con base real de type-coding, Power BI, Power Automate, y automatización inteligente. Cada herramienta nueva de IA que sale, la pruebo. El siguiente paso está abierto.',en:'Here I am today: combining 7+ years of data pipeline experience with LLMs (Claude, Gemini, ChatGPT), multi-agents, vibe coding with real type-coding foundation, Power BI, Power Automate, and intelligent automation. Every new AI tool that comes out, I try it. The next step is open.'},
+                                tags:['LLMs','Multi-agentes','Python','IICS','Power BI','Power Automate','Vibe Coding','RPA']
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+/* ══════ RENDER ══════ */
+const container = document.getElementById('treeContainer');
+const pathDisplay = document.getElementById('pathDisplay');
+const resultBox = document.getElementById('resultBox');
+let userPath = [];
+
+function renderTree(){
+  container.innerHTML='';
+  resultBox.classList.remove('show');
+  userPath=[];
+  updatePath();
+  renderNode(tree, container, 0);
+}
+
+function renderNode(node, parent, depth){
+  const branch = document.createElement('div');
+  branch.className='branch';
+
+  // Node element
+  const el = document.createElement('div');
+  el.className='tree-node'+(node.isGap?' gap-node':'');
+  el.id='node-'+node.id;
+  if(depth===0) el.classList.add('active');
+
+  el.innerHTML=
+    '<div class="node-icon">'+node.icon+'</div>'+
+    '<div class="node-question" data-es="'+node.question.es+'" data-en="'+node.question.en+'">'+node.question[currentLang]+'</div>'+
+    '<div class="node-title" data-es="'+node.title.es+'" data-en="'+node.title.en+'">'+node.title[currentLang]+'</div>'+
+    '<div class="node-desc" data-es="'+node.desc.es+'" data-en="'+node.desc.en+'">'+node.desc[currentLang]+'</div>'+
+    '<div class="node-year">'+node.year+'</div>';
+
+  el.addEventListener('click', function(e){
+    e.stopPropagation();
+    selectNode(node, depth);
+  });
+
+  branch.appendChild(el);
+
+  // Children
+  if(node.children && node.children.length){
+    const conn = document.createElement('div');
+    conn.className='connector'+(node.chosen?' chosen-path':'');
+    branch.appendChild(conn);
+
+    const childrenWrap = document.createElement('div');
+    childrenWrap.className='children';
+
+    node.children.forEach(function(child){
+      renderNode(child, childrenWrap, depth+1);
+    });
+
+    branch.appendChild(childrenWrap);
+  }
+
+  parent.appendChild(branch);
+}
+
+
+function selectNode(node, depth){
+  document.querySelectorAll('.tree-node').forEach(function(n){
+    n.classList.remove('active','chosen','not-chosen');
+  });
+
+  userPath = [];
+  function findPath(n, target, path){
+    path.push(n);
+    if(n.id===target.id) return true;
+    if(n.children){
+      for(var i=0;i<n.children.length;i++){
+        if(findPath(n.children[i], target, path)) return true;
+      }
+    }
+    path.pop();
+    return false;
+  }
+  findPath(tree, node, userPath);
+  updatePath();
+
+  userPath.forEach(function(n){
+    var el = document.getElementById('node-'+n.id);
+    if(el) el.classList.add('chosen');
+  });
+
+  var activeEl = document.getElementById('node-'+node.id);
+  if(activeEl){ activeEl.classList.remove('chosen'); activeEl.classList.add('active'); }
+
+  if(node.children){
+    node.children.forEach(function(child){
+      var el = document.getElementById('node-'+child.id);
+      if(el && !child.chosen) el.classList.add('not-chosen');
+    });
+  }
+
+  if(node.result){
+    showResult(node);
+  } else {
+    resultBox.classList.remove('show');
+  }
+}
+
+function showResult(node){
+  var r = node.result;
+  resultBox.innerHTML=
+    '<h3>'+r.title[currentLang]+'</h3>'+
+    '<p>'+r.text[currentLang]+'</p>'+
+    '<div class="result-tags">'+r.tags.map(function(t){return '<span class="result-tag">'+t+'</span>';}).join('')+'</div>';
+  resultBox.classList.add('show');
+  resultBox.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function updatePath(){
+  if(userPath.length===0){
+    pathDisplay.innerHTML='<span style="color:var(--muted);font-style:italic" data-es="Haz clic en un nodo para explorar" data-en="Click a node to explore">'+
+      (currentLang==='es'?'Haz clic en un nodo para explorar':'Click a node to explore')+'</span>';
+    return;
+  }
+  pathDisplay.innerHTML=userPath.map(function(n,i){
+    var color = i===userPath.length-1?'var(--accent)':'var(--teal)';
+    return '<span style="color:'+color+'">'+n.title[currentLang]+'</span>';
+  }).join(' <span style="color:var(--muted)">&rarr;</span> ');
+}
+
+/* ====== LANGUAGE ====== */
+window.setLang = function(lang){
+  currentLang = lang;
+  try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
+  document.documentElement.lang = lang;
+
+  document.querySelectorAll('.lang-toggle button').forEach(function(b){ b.classList.remove('active'); });
+  document.querySelector('.lang-toggle button:nth-child('+(lang==='es'?'1':'2')+')').classList.add('active');
+
+  document.querySelectorAll('[data-es][data-en]').forEach(function(el){
+    el.textContent = el.getAttribute('data-'+lang);
+  });
+
+  var t = document.querySelector('title');
+  if(t && t.dataset.es) t.textContent = t.getAttribute('data-'+lang);
+
+  renderTree();
+  animateEntrance();
+};
+
+/* ====== ENTRANCE ANIMATION ====== */
+function animateEntrance(){
+  var nodes = document.querySelectorAll('.tree-node');
+  nodes.forEach(function(node, i){
+    setTimeout(function(){ node.classList.add('vis'); }, 100 + i * 120);
+  });
+}
+
+
+/* ====== INIT ====== */
+try{
+  var saved = localStorage.getItem('portfolio-lang');
+  if(saved && (saved==='es'||saved==='en')) currentLang = saved;
+}catch(e){}
+
+renderTree();
+animateEntrance();
+
+if(currentLang !== 'es') setLang(currentLang);
+
+})();
+</script>
+</body>
+</html>

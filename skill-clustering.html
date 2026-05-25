@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-es="Skill Clustering — Adrian Cajas" data-en="Skill Clustering — Adrian Cajas">Skill Clustering — Adrian Cajas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1c2e;--bg2:#122336;--bg3:#1a3355;
+  --accent:#FFB162;--teal:#A0C9CB;--wine:#6B1A34;--wine-light:#d45c7e;
+  --emerald:#34d399;--purple:#a78bfa;
+  --text:#f0f0f0;--muted:#8899aa;
+  --radius:10px;--radius-lg:16px;
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Azeret Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font);scroll-behavior:smooth}
+body{min-height:100vh;padding:24px 24px 60px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(15,23,42,.6);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);z-index:10;margin:-24px -24px 24px}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-back{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:8px;color:var(--teal);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.02em;background:var(--bg3);border:1px solid rgba(255,255,255,.06);transition:all .2s}
+.topbar-back svg{width:18px;height:18px;flex-shrink:0}
+.topbar-back:hover{color:var(--accent);border-color:rgba(255,177,98,.3);background:rgba(255,177,98,.08)}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.06)}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.lang-toggle{display:flex;gap:4px}
+.lang-toggle button{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:var(--font);transition:all .2s}
+.lang-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+header{margin-bottom:32px;max-width:700px}
+header h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;line-height:1.15;letter-spacing:-0.03em}
+header h1 em{font-style:normal;color:var(--accent)}
+header p{color:var(--muted);font-size:.92rem;margin-top:10px;line-height:1.7;max-width:60ch}
+
+/* Canvas */
+.canvas-wrap{position:relative;width:100%;max-width:900px;margin:0 auto;aspect-ratio:4/3;background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);overflow:hidden}
+canvas{width:100%;height:100%;display:block}
+
+/* Legend */
+.legend{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:center;margin-top:20px;font-size:.82rem}
+.legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:4px 10px;border-radius:20px;transition:all .2s;border:1px solid transparent}
+.legend-item:hover{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.04)}
+.legend-item.active{border-color:var(--item-color);background:rgba(255,255,255,.06)}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Tooltip */
+.tooltip{position:fixed;pointer-events:none;background:var(--bg2);border:1px solid var(--accent);border-radius:var(--radius);padding:14px 18px;font-size:.82rem;z-index:100;opacity:0;transition:opacity .15s;max-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.tooltip.show{opacity:1}
+.tooltip-name{font-weight:600;font-size:.95rem;margin-bottom:4px}
+.tooltip-cluster{font-family:var(--mono);font-size:.7rem;color:var(--accent);letter-spacing:.04em;margin-bottom:6px}
+.tooltip-bar-wrap{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:6px}
+.tooltip-bar{height:100%;border-radius:2px;transition:width .3s}
+.tooltip-lvl{font-family:var(--mono);font-size:.7rem;color:var(--muted);margin-top:4px}
+.tooltip-subs{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
+.tooltip-sub{font-size:.68rem;background:rgba(255,255,255,.06);padding:2px 7px;border-radius:10px;color:var(--muted)}
+
+/* Info box */
+.info-box{max-width:900px;margin:28px auto 0;background:var(--bg2);border:1px solid rgba(160,201,203,.12);border-radius:var(--radius-lg);padding:24px}
+.info-box h3{font-size:1rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.info-box h3 span{color:var(--accent)}
+.info-box p{color:var(--muted);font-size:.88rem;line-height:1.7}
+
+/* Controls */
+.controls{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.ctrl-btn{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:6px 16px;border-radius:20px;cursor:pointer;font-size:.78rem;font-family:var(--font);transition:all .2s}
+.ctrl-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ctrl-btn.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+@media(max-width:768px){
+  .canvas-wrap{aspect-ratio:1/1}
+  .legend{gap:8px 12px;font-size:.75rem}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.05s!important}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html#playground" class="topbar-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
+      <span data-es="Volver al portfolio" data-en="Back to portfolio">Volver al portfolio</span>
+    </a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-title" data-es="Mapa de Skills por Clustering" data-en="Skill Clustering Map">Mapa de Skills por Clustering</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-toggle">
+      <button class="active" onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1><span data-es="Mapa de" data-en="Skill">Mapa de</span> <em data-es="Skills" data-en="Clustering">Skills</em> <span data-es="por Clustering" data-en="Map">por Clustering</span></h1>
+  <p data-es="Algoritmo K-Means aplicado a mis habilidades reales: agrupa mis tecnologías por similitud de dominio y nivel de experiencia. Los nodos cercanos comparten más contexto. Haz clic en un nodo para explorar." data-en="K-Means algorithm applied to my real skills: groups my technologies by domain similarity and experience level. Nearby nodes share more context. Click a node to explore.">Algoritmo K-Means aplicado a mis habilidades reales: agrupa mis tecnologías por similitud de dominio y nivel de experiencia. Los nodos cercanos comparten más contexto. Haz clic en un nodo para explorar.</p>
+</header>
+
+<div class="controls">
+  <button class="ctrl-btn active" data-k="4" onclick="setK(4)" data-es="4 clusters" data-en="4 clusters">4 clusters</button>
+  <button class="ctrl-btn" data-k="5" onclick="setK(5)" data-es="5 clusters" data-en="5 clusters">5 clusters</button>
+  <button class="ctrl-btn" data-k="6" onclick="setK(6)" data-es="6 clusters" data-en="6 clusters">6 clusters</button>
+  <button class="ctrl-btn" data-k="auto" onclick="setK('auto')" data-es="Auto (óptimo)" data-en="Auto (optimal)">Auto (óptimo)</button>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="clusterCanvas"></canvas>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<div class="info-box">
+  <h3><span>💡</span> <span data-es="¿Qué dice esto de mí?" data-en="What does this say about me?">¿Qué dice esto de mí?</span></h3>
+  <p data-es="Mis skills no son aleatorias: se agrupan naturalmente en clusters de dominio. La cercanía entre nodos revela cómo conecto tecnologías — por ejemplo, Python aparece cerca de Pandas, Scikit-learn y Flask porque las uso juntas. Los clusters muestran mi perfil: soy un ingeniero de datos con fuerte base en automatización, que está expandiéndose hacia IA y agentes. Las conexiones entre clusters revelan mi versatilidad." data-en="My skills aren't random: they naturally group into domain clusters. Node proximity reveals how I connect technologies — for example, Python appears near Pandas, Scikit-learn and Flask because I use them together. The clusters show my profile: I'm a data engineer with a strong automation foundation, expanding into AI and agents. Cross-cluster connections reveal my versatility.">Mis skills no son aleatorias: se agrupan naturalmente en clusters de dominio. La cercanía entre nodos revela cómo conecto tecnologías — por ejemplo, Python aparece cerca de Pandas, Scikit-learn y Flask porque las uso juntas. Los clusters muestran mi perfil: soy un ingeniero de datos con fuerte base en automatización, que está expandiéndose hacia IA y agentes. Las conexiones entre clusters revelan mi versatilidad.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ══════ DATA: Adrian's real skills ══════ */
+const skills = [
+  // Big Data & Cloud
+  {name:'Informatica Cloud',lvl:85,domain:0,subs:['Data Integration','Mass Ingestion','Mappings','Taskflows','Secure Agent'],cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'}},
+  {name:'IICS',lvl:80,domain:0,subs:['CDI','CAI','Connectors','Secure Agent','REST API'],cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'}},
+  {name:'AWS',lvl:65,domain:0,subs:['EC2','S3','Athena','DynamoDB','ECS','Lambda'],cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'}},
+  {name:'Spark / Scala',lvl:45,domain:0,subs:['SparkSQL','RDDs','DataFrames','Functional Programming'],cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'}},
+  {name:'HDFS / Hive',lvl:50,domain:0,subs:['File Management','HiveQL','Partitions','Replication'],cat:{es:'Big Data & Cloud',en:'Big Data & Cloud'}},
+
+  // IA & Agents
+  {name:'LLMs',lvl:35,domain:1,subs:['Claude','Gemini','GPT','Prompting avanzado','Fine-tuning'],cat:{es:'IA & Agentes',en:'AI & Agents'}},
+  {name:'APIs de IA',lvl:40,domain:1,subs:['Claude API','Gemini API','REST Integration','Webhooks'],cat:{es:'IA & Agentes',en:'AI & Agents'}},
+  {name:'Multi-agentes',lvl:25,domain:1,subs:['Orquestación','Delegación de tareas','Agent SDK'],cat:{es:'IA & Agentes',en:'AI & Agents'}},
+  {name:'Ollama',lvl:30,domain:1,subs:['Modelos locales','Llama','Mistral','Embeddings'],cat:{es:'IA & Agentes',en:'AI & Agents'}},
+  {name:'RAG',lvl:25,domain:1,subs:['Vector DB','Chunking','Retrieval','Embeddings'],cat:{es:'IA & Agentes',en:'AI & Agents'}},
+
+  // Data Insights
+  {name:'SQL',lvl:70,domain:2,subs:['PostgreSQL','MySQL','Oracle SQL','T-SQL','Joins complejos'],cat:{es:'Data Insights',en:'Data Insights'}},
+  {name:'NoSQL',lvl:65,domain:2,subs:['MongoDB','DynamoDB','Collections','Aggregation'],cat:{es:'Data Insights',en:'Data Insights'}},
+  {name:'Power BI',lvl:50,domain:2,subs:['Dashboards','DAX','Data Model','Visualizaciones'],cat:{es:'Data Insights',en:'Data Insights'}},
+  {name:'Power Query',lvl:55,domain:2,subs:['M Language','Transformaciones','Connectors','Merge'],cat:{es:'Data Insights',en:'Data Insights'}},
+
+  // Automation
+  {name:'Python',lvl:85,domain:3,subs:['Pandas','NumPy','Jupyter','Scikit-learn','Flask','Automation scripts'],cat:{es:'Automatización',en:'Automation'}},
+  {name:'Power Automate',lvl:40,domain:3,subs:['Flows','Triggers','Connectors','Approval workflows'],cat:{es:'Automatización',en:'Automation'}},
+  {name:'Control-M',lvl:65,domain:3,subs:['Job Scheduling','Monitoring','Alerts','Batch processing'],cat:{es:'Automatización',en:'Automation'}},
+  {name:'Docker',lvl:55,domain:3,subs:['Dockerfile','Compose','Images','Containerization'],cat:{es:'Automatización',en:'Automation'}},
+
+  // Dev (from mind map implied)
+  {name:'JavaScript',lvl:60,domain:4,subs:['ES6+','DOM','Canvas','D3.js','Chart.js'],cat:{es:'Desarrollo',en:'Development'}},
+  {name:'HTML/CSS',lvl:70,domain:4,subs:['Responsive','Flexbox','Grid','Animations','A11y'],cat:{es:'Desarrollo',en:'Development'}},
+  {name:'Git',lvl:75,domain:4,subs:['Branching','PRs','CI/CD','GitHub Actions'],cat:{es:'Desarrollo',en:'Development'}},
+  {name:'REST APIs',lvl:70,domain:4,subs:['Design','Auth','Pagination','Error handling'],cat:{es:'Desarrollo',en:'Development'}},
+
+  // Soft Skills
+  {name:'Comunicación',lvl:80,domain:5,subs:['Presentaciones','Documentación','Stakeholders'],cat:{es:'Soft Skills',en:'Soft Skills'}},
+  {name:'Problem Solving',lvl:85,domain:5,subs:['Root cause','Debugging','Optimización'],cat:{es:'Soft Skills',en:'Soft Skills'}},
+  {name:'Trabajo en equipo',lvl:80,domain:5,subs:['Agile','Scrum','Code reviews','Pair programming'],cat:{es:'Soft Skills',en:'Soft Skills'}}
+];
+
+const CLUSTER_COLORS = ['#FFB162','#A0C9CB','#d45c7e','#34d399','#a78bfa','#f472b6'];
+const CLUSTER_NAMES = {
+  es:['Infraestructura de Datos','Inteligencia Artificial','Análisis & Visualización','Automatización & DevOps','Desarrollo Web','Habilidades Transversales'],
+  en:['Data Infrastructure','Artificial Intelligence','Analytics & Visualization','Automation & DevOps','Web Development','Cross-cutting Skills']
+};
+
+let currentLang = (function(){ try{ var s=localStorage.getItem('portfolio-lang'); return (s==='en')?'en':'es'; }catch(e){ return 'es'; } })();
+let currentK = 4;
+let nodes = [];
+let clusters = [];
+let hoveredNode = null;
+let selectedNode = null;
+let animFrame = null;
+let W, H;
+
+const canvas = document.getElementById('clusterCanvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+const dpr = window.devicePixelRatio || 1;
+
+function resize(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = rect.width; H = rect.height;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+/* ══════ K-MEANS ══════ */
+function kmeans(data, k, maxIter){
+  // Feature vectors: [domain_normalized, level_normalized]
+  const features = data.map(d => [d.domain / 5, d.lvl / 100]);
+
+  // Init centroids using k-means++
+  let centroids = [features[Math.floor(Math.random()*features.length)].slice()];
+  for(let c=1;c<k;c++){
+    const dists = features.map(f => {
+      return Math.min(...centroids.map(cen => Math.hypot(f[0]-cen[0], f[1]-cen[1])));
+    });
+    const totalDist = dists.reduce((a,b)=>a+b,0);
+    let r = Math.random()*totalDist, acc=0;
+    for(let i=0;i<dists.length;i++){
+      acc+=dists[i];
+      if(acc>=r){centroids.push(features[i].slice());break;}
+    }
+  }
+
+  let assignments = new Array(features.length).fill(0);
+  for(let iter=0;iter<maxIter;iter++){
+    // Assign
+    let changed = false;
+    for(let i=0;i<features.length;i++){
+      let minD=Infinity, minC=0;
+      for(let c=0;c<k;c++){
+        const d=Math.hypot(features[i][0]-centroids[c][0], features[i][1]-centroids[c][1]);
+        if(d<minD){minD=d;minC=c;}
+      }
+      if(assignments[i]!==minC){changed=true;assignments[i]=minC;}
+    }
+    if(!changed) break;
+    // Update centroids
+    for(let c=0;c<k;c++){
+      const members = features.filter((_,i)=>assignments[i]===c);
+      if(members.length>0){
+        centroids[c][0]=members.reduce((a,m)=>a+m[0],0)/members.length;
+        centroids[c][1]=members.reduce((a,m)=>a+m[1],0)/members.length;
+      }
+    }
+  }
+  return {assignments, centroids};
+}
+
+/* ══════ LAYOUT ══════ */
+function buildNodes(k){
+  const result = kmeans(skills, k, 50);
+
+  // Position clusters in a ring
+  const cx = W/2, cy = H/2;
+  const clusterRadius = Math.min(W,H) * 0.28;
+
+  // Compute cluster centers
+  const clusterCenters = result.centroids.map((_,i) => {
+    const angle = (i / k) * Math.PI * 2 - Math.PI/2;
+    return {x: cx + Math.cos(angle)*clusterRadius, y: cy + Math.sin(angle)*clusterRadius};
+  });
+
+  nodes = skills.map((skill, i) => {
+    const cluster = result.assignments[i];
+    const center = clusterCenters[cluster];
+    // Spread within cluster based on level
+    const spread = Math.min(W,H)*0.12;
+    const angle = (Math.random()*Math.PI*2);
+    const dist = (1 - skill.lvl/100) * spread * (0.5 + Math.random()*0.5);
+    const radius = 6 + (skill.lvl/100)*18;
+
+    return {
+      skill,
+      cluster,
+      x: center.x + Math.cos(angle)*dist,
+      y: center.y + Math.sin(angle)*dist,
+      targetX: center.x + Math.cos(angle)*dist,
+      targetY: center.y + Math.sin(angle)*dist,
+      radius,
+      vx:0, vy:0
+    };
+  });
+
+  clusters = Array.from({length:k},(_,i)=>({
+    center: clusterCenters[i],
+    color: CLUSTER_COLORS[i % CLUSTER_COLORS.length],
+    name: {
+      es: CLUSTER_NAMES.es[i % CLUSTER_NAMES.es.length],
+      en: CLUSTER_NAMES.en[i % CLUSTER_NAMES.en.length]
+    },
+    members: nodes.filter(n=>n.cluster===i)
+  }));
+
+  // Force simulation for collision avoidance
+  for(let iter=0;iter<120;iter++){
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const dx=nodes[j].x-nodes[i].x;
+        const dy=nodes[j].y-nodes[i].y;
+        const d=Math.sqrt(dx*dx+dy*dy)||1;
+        const minD=nodes[i].radius+nodes[j].radius+4;
+        if(d<minD){
+          const push=(minD-d)/2;
+          const nx=dx/d, ny=dy/d;
+          nodes[i].x-=nx*push;nodes[i].y-=ny*push;
+          nodes[j].x+=nx*push;nodes[j].y+=ny*push;
+        }
+      }
+      // Pull toward cluster center gently
+      const c=clusters[nodes[i].cluster].center;
+      nodes[i].x+=(c.x-nodes[i].x)*0.01;
+      nodes[i].y+=(c.y-nodes[i].y)*0.01;
+      // Keep in bounds
+      const r=nodes[i].radius;
+      nodes[i].x=Math.max(r,Math.min(W-r,nodes[i].x));
+      nodes[i].y=Math.max(r,Math.min(H-r,nodes[i].y));
+    }
+  }
+
+  buildLegend();
+}
+
+function buildLegend(){
+  const leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  clusters.forEach((cl,i) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.style.setProperty('--item-color', cl.color);
+    item.innerHTML = '<div class="legend-dot" style="background:'+cl.color+'"></div><span data-es="'+cl.name.es+'" data-en="'+cl.name.en+'">'+cl.name[currentLang]+'</span> <span style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">('+cl.members.length+')</span>';
+    item.addEventListener('click', ()=>toggleCluster(i));
+    leg.appendChild(item);
+  });
+}
+
+let highlightCluster = -1;
+function toggleCluster(i){
+  highlightCluster = highlightCluster===i ? -1 : i;
+  document.querySelectorAll('.legend-item').forEach((el,j)=>{
+    el.classList.toggle('active', j===highlightCluster);
+  });
+}
+
+/* ══════ DRAW ══════ */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // Draw cluster areas (soft ellipses)
+  clusters.forEach((cl,ci) => {
+    if(highlightCluster!==-1 && highlightCluster!==ci) return;
+    const members = cl.members;
+    if(members.length<2) return;
+    const avgX = members.reduce((a,n)=>a+n.x,0)/members.length;
+    const avgY = members.reduce((a,n)=>a+n.y,0)/members.length;
+    let maxDist = 0;
+    members.forEach(n => {
+      const d = Math.hypot(n.x-avgX, n.y-avgY) + n.radius;
+      if(d>maxDist) maxDist=d;
+    });
+    const r = maxDist + 20;
+    ctx.beginPath();
+    ctx.arc(avgX, avgY, r, 0, Math.PI*2);
+    ctx.fillStyle = cl.color.replace(')',',0.04)').replace('rgb','rgba').replace('#','');
+    // Convert hex to rgba
+    const hex = cl.color;
+    const rr = parseInt(hex.slice(1,3),16);
+    const gg = parseInt(hex.slice(3,5),16);
+    const bb = parseInt(hex.slice(5,7),16);
+    ctx.fillStyle = 'rgba('+rr+','+gg+','+bb+',0.06)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba('+rr+','+gg+','+bb+',0.12)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Draw connections between same-cluster nodes
+  nodes.forEach((n,i)=>{
+    if(highlightCluster!==-1 && n.cluster!==highlightCluster) return;
+    nodes.forEach((m,j)=>{
+      if(j<=i) return;
+      if(n.cluster!==m.cluster) return;
+      const d=Math.hypot(n.x-m.x,n.y-m.y);
+      if(d<150){
+        const hex=clusters[n.cluster].color;
+        const rr=parseInt(hex.slice(1,3),16);
+        const gg=parseInt(hex.slice(3,5),16);
+        const bb=parseInt(hex.slice(5,7),16);
+        const alpha=0.08*(1-d/150);
+        ctx.beginPath();
+        ctx.moveTo(n.x,n.y);ctx.lineTo(m.x,m.y);
+        ctx.strokeStyle='rgba('+rr+','+gg+','+bb+','+alpha+')';
+        ctx.lineWidth=1;
+        ctx.stroke();
+      }
+    });
+  });
+
+  // Draw nodes
+  nodes.forEach(n => {
+    const dimmed = highlightCluster!==-1 && n.cluster!==highlightCluster;
+    const isHovered = n===hoveredNode;
+    const isSelected = n===selectedNode;
+    const hex = clusters[n.cluster].color;
+    const rr=parseInt(hex.slice(1,3),16);
+    const gg=parseInt(hex.slice(3,5),16);
+    const bb=parseInt(hex.slice(5,7),16);
+
+    const alpha = dimmed ? 0.1 : (isHovered||isSelected ? 0.9 : 0.5);
+    const r = isHovered ? n.radius*1.2 : n.radius;
+
+    // Glow
+    if((isHovered||isSelected) && !dimmed){
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,r+8,0,Math.PI*2);
+      ctx.fillStyle='rgba('+rr+','+gg+','+bb+',0.15)';
+      ctx.fill();
+    }
+
+    // Circle
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,r,0,Math.PI*2);
+    ctx.fillStyle='rgba('+rr+','+gg+','+bb+','+alpha+')';
+    ctx.fill();
+    if(isHovered||isSelected){
+      ctx.strokeStyle='rgba('+rr+','+gg+','+bb+',0.8)';
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+
+    // Label
+    if(!dimmed && (n.radius>12 || isHovered)){
+      ctx.font=(isHovered?'600 ':'500 ')+(isHovered?'12':'10')+'px Outfit,sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillStyle=dimmed?'rgba(240,240,240,0.15)':'rgba(240,240,240,'+(isHovered?'1':'0.85')+')';
+      ctx.fillText(n.skill.name,n.x,n.y+r+14);
+    }
+  });
+
+  animFrame = requestAnimationFrame(draw);
+}
+
+/* ══════ INTERACTION ══════ */
+function getNode(mx,my){
+  for(let i=nodes.length-1;i>=0;i--){
+    const d=Math.hypot(nodes[i].x-mx,nodes[i].y-my);
+    if(d<=nodes[i].radius+4) return nodes[i];
+  }
+  return null;
+}
+
+canvas.addEventListener('mousemove', function(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const node=getNode(mx,my);
+  hoveredNode=node;
+  canvas.style.cursor=node?'pointer':'default';
+
+  if(node){
+    const s=node.skill;
+    const clName=clusters[node.cluster].name[currentLang];
+    tooltip.innerHTML=
+      '<div class="tooltip-name">'+s.name+'</div>'+
+      '<div class="tooltip-cluster">'+clName+'</div>'+
+      '<div class="tooltip-bar-wrap"><div class="tooltip-bar" style="width:'+s.lvl+'%;background:'+clusters[node.cluster].color+'"></div></div>'+
+      '<div class="tooltip-lvl">'+(currentLang==='es'?'Nivel: ':'Level: ')+s.lvl+'%</div>'+
+      (s.subs.length?'<div class="tooltip-subs">'+s.subs.map(sub=>'<span class="tooltip-sub">'+sub+'</span>').join('')+'</div>':'');
+    tooltip.classList.add('show');
+    let tx=e.clientX+16, ty=e.clientY-10;
+    if(tx+290>window.innerWidth) tx=e.clientX-290;
+    if(ty+200>window.innerHeight) ty=e.clientY-200;
+    tooltip.style.left=tx+'px';
+    tooltip.style.top=ty+'px';
+  } else {
+    tooltip.classList.remove('show');
+  }
+});
+
+canvas.addEventListener('mouseleave', ()=>{
+  hoveredNode=null;
+  tooltip.classList.remove('show');
+});
+
+canvas.addEventListener('click', function(e){
+  const rect=canvas.getBoundingClientRect();
+  const node=getNode(e.clientX-rect.left, e.clientY-rect.top);
+  selectedNode = selectedNode===node ? null : node;
+});
+
+/* ══════ CONTROLS ══════ */
+function setK(k){
+  if(k==='auto') k=5;
+  currentK=k;
+  document.querySelectorAll('.ctrl-btn').forEach(b=>{
+    const bk=b.getAttribute('data-k');
+    b.classList.toggle('active', bk==String(k));
+  });
+  highlightCluster=-1;
+  buildNodes(currentK);
+}
+
+window.setK = setK;
+
+/* ══════ LANGUAGE ══════ */
+function setLang(lang){
+  currentLang=lang;
+  try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.lang-toggle button:nth-child('+(lang==='es'?'1':'2')+')').classList.add('active');
+  document.querySelectorAll('[data-es][data-en]').forEach(el=>{
+    const t=el.getAttribute('data-'+lang);
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA') el.placeholder=t;
+    else if(el.children.length>0){
+      for(let i=0;i<el.childNodes.length;i++){
+        const n=el.childNodes[i];
+        if(n.nodeType===Node.TEXT_NODE && n.textContent.trim()!=='') n.textContent=t;
+      }
+    } else el.textContent=t;
+  });
+  buildLegend();
+}
+window.setLang = setLang;
+
+/* ====== INIT ====== */
+function init(){
+  resize();
+  buildNodes(currentK);
+  draw();
+}
+
+window.addEventListener('resize', ()=>{
+  resize();
+  if(animFrame) cancelAnimationFrame(animFrame);
+  buildNodes(currentK);
+  draw();
+});
+
+init();
+if(currentLang!=='es') setLang(currentLang);
+
+})();
+</script>
+</body>
+</html>
+>

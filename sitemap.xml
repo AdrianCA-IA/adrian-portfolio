@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/index.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/skill-clustering.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/predictive-model.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/decision-tree.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/random-forest.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://storage.googleapis.com/my-bucket-portfolio/circle-packing.html</loc>
+    <lastmod>2026-05-25</lastmod>
+    <priority>0.7</priority>
+  </url>
+</urlset>

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adrian Cajas — Skill Drill-Down</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#0a0f1e;
+  --bg-panel:rgba(14,20,38,0.92);
+  --bg-card:rgba(20,28,50,0.80);
+  --text:#e2e8f4;
+  --text-2:#8b9cc0;
+  --text-3:#4e5e82;
+  --blue:#3b82f6;
+  --blue-b:#60a5fa;
+  --blue-d:rgba(59,130,246,0.08);
+  --blue-glow:rgba(59,130,246,0.15);
+  --cyan:#22d3ee;
+  --purple:#a78bfa;
+  --emerald:#34d399;
+  --amber:#fbbf24;
+  --border:rgba(59,130,246,0.12);
+  --border-h:rgba(59,130,246,0.30);
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Azeret Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ═══ BACK BUTTON ═══ */
+.topbar-back{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px 6px 10px;border-radius:8px;margin-right:12px;
+  color:var(--blue-b);text-decoration:none;
+  font-size:0.82rem;font-weight:500;letter-spacing:0.01em;
+  background:var(--blue-d);border:1px solid var(--border);
+  transition:all .2s var(--ease);
+}
+.topbar-back svg{width:18px;height:18px;flex-shrink:0}
+.topbar-back:hover{color:#FFB162;border-color:rgba(255,177,98,.3);background:rgba(255,177,98,.08)}
+
+/* ═══ HEADER BAR ═══ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background:var(--bg-panel);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;z-index:10;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-sep{width:1px;height:20px;background:var(--border)}
+.topbar-title{font-size:0.82rem;font-weight:600;color:var(--text-2)}
+
+/* Breadcrumbs */
+.breadcrumbs{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:0.7rem;
+}
+.bc-item{
+  color:var(--text-3);cursor:pointer;
+  padding:3px 10px;border-radius:6px;
+  transition:all 0.2s;
+}
+.bc-item:hover{color:var(--blue-b);background:var(--blue-d)}
+.bc-item.active{color:var(--blue-b);background:var(--blue-glow)}
+.bc-sep{color:var(--text-3);font-size:0.6rem}
+
+/* Right section */
+.topbar-right{display:flex;align-items:center;gap:16px}
+.lang-toggle{display:flex;gap:4px}
+.lang-toggle button{background:var(--blue-d);border:1px solid var(--border);color:var(--text-3);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:var(--mono);transition:all .2s}
+.lang-toggle button.active{background:var(--emerald);color:var(--bg);border-color:var(--emerald);font-weight:600}
+
+/* Status indicators */
+.topbar-status{display:flex;align-items:center;gap:14px}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--emerald);
+  animation:blink 2s ease infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.status-text{font-family:var(--mono);font-size:0.68rem;color:var(--text-3)}
+
+/* ═══ MAIN LAYOUT ═══ */
+.main{display:flex;flex:1;overflow:hidden;position:relative}
+
+/* ═══ SVG AREA ═══ */
+.viz-area{flex:1;position:relative;overflow:hidden}
+#packSvg{width:100%;height:100%;display:block}
+
+/* Circle styles */
+.node-circle{
+  stroke-width:1.5;
+  cursor:pointer;
+  transition:stroke 0.3s,stroke-width 0.3s;
+}
+.node-circle:hover{stroke-width:2.5}
+.node-label{
+  font-family:var(--font);
+  fill:var(--text);
+  pointer-events:none;
+  text-anchor:middle;
+  dominant-baseline:central;
+}
+.node-label-mono{
+  font-family:var(--mono);
+  fill:var(--text-2);
+  pointer-events:none;
+  text-anchor:middle;
+  dominant-baseline:central;
+}
+
+/* ═══ INFO PANEL (right) ═══ */
+.info-panel{
+  width:320px;flex-shrink:0;
+  background:var(--bg-panel);
+  backdrop-filter:blur(20px);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  transition:transform 0.35s var(--ease);
+}
+.info-panel.collapsed{transform:translateX(100%);position:absolute;right:0;top:0;bottom:0}
+
+.panel-header{
+  padding:24px;border-bottom:1px solid var(--border);
+}
+.panel-label{
+  font-family:var(--mono);font-size:0.62rem;font-weight:600;
+  color:var(--text-3);letter-spacing:0.14em;text-transform:uppercase;
+  margin-bottom:6px;display:flex;align-items:center;gap:6px;
+}
+.panel-label::before{content:'';width:10px;height:1px;background:var(--blue)}
+.panel-name{font-size:1.2rem;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px}
+.panel-path{font-family:var(--mono);font-size:0.68rem;color:var(--text-3)}
+
+.panel-body{padding:24px;flex:1}
+
+/* Metric rows */
+.metric{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid rgba(59,130,246,0.06);
+}
+.metric:last-child{border-bottom:none}
+.metric-label{font-size:0.8rem;color:var(--text-2)}
+.metric-val{
+  font-family:var(--mono);font-size:0.82rem;font-weight:600;
+  color:var(--blue-b);
+}
+
+/* Skill bar in panel */
+.panel-bar-wrap{margin-top:20px}
+.panel-bar-label{
+  display:flex;justify-content:space-between;
+  font-size:0.75rem;color:var(--text-2);margin-bottom:6px;
+}
+.panel-bar-track{
+  height:6px;background:rgba(59,130,246,0.08);
+  border-radius:3px;overflow:hidden;
+}
+.panel-bar-fill{
+  height:100%;border-radius:3px;
+  transition:width 0.8s var(--ease);
+}
+
+/* Child list in panel */
+.panel-children{margin-top:20px}
+.panel-child-title{
+  font-family:var(--mono);font-size:0.62rem;font-weight:600;
+  color:var(--text-3);letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.panel-child{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;margin-bottom:4px;
+  border-radius:8px;transition:background 0.2s;
+  cursor:pointer;
+}
+.panel-child:hover{background:var(--blue-d)}
+.panel-child-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.panel-child-name{font-size:0.82rem;flex:1}
+.panel-child-val{font-family:var(--mono);font-size:0.68rem;color:var(--text-3)}
+
+/* KPI description */
+.panel-kpi{
+  margin-top:20px;padding:14px 16px;
+  background:rgba(59,130,246,0.06);
+  border:1px solid rgba(59,130,246,0.12);
+  border-radius:10px;
+  font-size:0.78rem;color:var(--text-2);line-height:1.65;
+}
+
+/* ═══ BOTTOM BAR ═══ */
+.bottombar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 28px;
+  background:var(--bg-panel);
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  font-family:var(--mono);font-size:0.65rem;color:var(--text-3);
+}
+.bb-hint{display:flex;align-items:center;gap:14px}
+.bb-key{
+  padding:2px 8px;background:rgba(59,130,246,0.08);
+  border:1px solid var(--border);border-radius:4px;
+  font-size:0.62rem;color:var(--text-2);
+}
+
+/* ═══ SCAN LINE (subtle) ═══ */
+.viz-area::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(59,130,246,0.15),transparent);
+  animation:scan 4s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes scan{0%{top:0}50%{top:100%}100%{top:0}}
+
+/* Grid overlay */
+.viz-area::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(59,130,246,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,130,246,0.02) 1px,transparent 1px);
+  background-size:40px 40px;
+  z-index:0;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px){
+  .info-panel{width:260px}
+}
+@media(max-width:700px){
+  .main{flex-direction:column}
+  .info-panel{
+    width:100%;height:auto;max-height:40vh;
+    border-left:none;border-top:1px solid var(--border);
+  }
+  .info-panel.collapsed{transform:translateY(100%);position:absolute;bottom:0;left:0;right:0;top:auto}
+  .topbar{padding:10px 16px}
+  .topbar-title{display:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.05s!important}
+  .viz-area::after{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html#playground" class="topbar-back" title="Volver al portfolio"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg><span data-es="Volver al portfolio" data-en="Back to portfolio">Volver al portfolio</span></a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-title">Skill Drill-Down</span>
+  </div>
+  <div class="breadcrumbs" id="breadcrumbs">
+    <span class="bc-item active" data-depth="0">ROOT</span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-status">
+      <span class="status-dot"></span>
+      <span class="status-text">3 areas · 15 skills · 58 tools</span>
+    </div>
+    <div class="lang-toggle">
+      <button class="active" onclick="setLang('es')">ES</button>
+      <button onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="viz-area">
+    <svg id="packSvg"></svg>
+  </div>
+  <div class="info-panel" id="infoPanel">
+    <div class="panel-header">
+      <div class="panel-label">Nodo seleccionado</div>
+      <div class="panel-name" id="panelName">Adrian Cajas</div>
+      <div class="panel-path" id="panelPath">/ root</div>
+    </div>
+    <div class="panel-body" id="panelBody">
+      <div class="metric"><span class="metric-label">Áreas maestras</span><span class="metric-val">3</span></div>
+      <div class="metric"><span class="metric-label">Skills totales</span><span class="metric-val">15</span></div>
+      <div class="metric"><span class="metric-label">Herramientas</span><span class="metric-val">58</span></div>
+      <div class="metric"><span class="metric-label">Años exp.</span><span class="metric-val" id="yearsMetric">7+</span></div>
+      <div class="panel-kpi">Ingeniero de Datos e IA con +5 años construyendo pipelines masivos, automatizando ETL y explorando LLMs e inteligencia artificial.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottombar">
+  <div class="bb-hint">
+    <span><span class="bb-key">Click</span> Zoom in</span>
+    <span><span class="bb-key">Click centro</span> Zoom out</span>
+    <span><span class="bb-key">Hover</span> Detalles</span>
+  </div>
+  <span>&copy; 2026 Adrian Cajas — Data Command Center</span>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  LANGUAGE TOGGLE (basic — full i18n pending)
+// ═══════════════════════════════════════
+function setLang(lang){
+  try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
+  document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.lang-toggle button:nth-child('+(lang==='es'?'1':'2')+')').classList.add('active');
+  document.querySelectorAll('[data-es][data-en]').forEach(el=>{
+    const t=el.getAttribute('data-'+lang);
+    if(el.children.length===0) el.textContent=t;
+  });
+}
+(function(){var s=localStorage.getItem('portfolio-lang');if(s) setLang(s);})();
+
+// ═══════════════════════════════════════
+//  DATA HIERARCHY
+// ═══════════════════════════════════════
+const DATA = {
+  name: "Adrian Cajas",
+  desc: "Ingeniero de Datos e IA — +7 años de experiencia",
+  children: [
+    {
+      name: "ETL & Data Integration",
+      color: "#3b82f6",
+      level: 85,
+      kpi: "Migración masiva de datos entre plataformas Salesforce, procesamiento de millones de registros con Informatica Cloud, automatización de pipelines ETL con IICS y orquestación de procesos con Control-M.",
+      children: [
+        {
+          name: "Informatica Cloud",
+          level: 88,
+          desc: "Plataforma principal de integración de datos",
+          children: [
+            { name: "Data Integration", value: 18, level: 90 },
+            { name: "Mass Ingestion", value: 14, level: 85 },
+            { name: "Mappings", value: 16, level: 90 },
+            { name: "Taskflows", value: 12, level: 80 },
+            { name: "Secure Agent", value: 10, level: 75 }
+          ]
+        },
+        {
+          name: "IICS",
+          level: 82,
+          desc: "Informatica Intelligent Cloud Services",
+          children: [
+            { name: "CDI", value: 15, level: 85 },
+            { name: "CAI", value: 12, level: 78 },
+            { name: "Connectors", value: 14, level: 82 },
+            { name: "Secure Agent", value: 10, level: 80 },
+            { name: "REST API", value: 11, level: 75 }
+          ]
+        },
+        {
+          name: "Salesforce",
+          level: 75,
+          desc: "Integración y migración de datos CRM",
+          children: [
+            { name: "Bulk API", value: 12, level: 78 },
+            { name: "Data Loader", value: 10, level: 80 },
+            { name: "SOQL", value: 14, level: 75 },
+            { name: "Custom Objects", value: 11, level: 70 }
+          ]
+        },
+        {
+          name: "Python ETL",
+          level: 85,
+          desc: "Automatización y extracción de datos",
+          children: [
+            { name: "Pandas", value: 16, level: 88 },
+            { name: "Jupyter", value: 12, level: 85 },
+            { name: "Automation", value: 14, level: 82 },
+            { name: "NumPy", value: 10, level: 78 }
+          ]
+        },
+        {
+          name: "Bases de datos",
+          level: 70,
+          desc: "SQL y NoSQL para pipelines de datos",
+          children: [
+            { name: "Oracle", value: 12, level: 65 },
+            { name: "PostgreSQL", value: 11, level: 70 },
+            { name: "MySQL", value: 13, level: 75 },
+            { name: "MongoDB", value: 12, level: 65 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "Cloud Infrastructure",
+      color: "#22d3ee",
+      level: 62,
+      kpi: "Despliegue y administración de servicios en AWS, contenedorización con Docker, administración avanzada de Linux, gestión de datos distribuidos en HDFS y monitorización de procesos batch en producción.",
+      children: [
+        {
+          name: "AWS",
+          level: 65,
+          desc: "Amazon Web Services — servicios cloud",
+          children: [
+            { name: "EC2", value: 14, level: 70 },
+            { name: "S3", value: 16, level: 75 },
+            { name: "Athena", value: 12, level: 60 },
+            { name: "DynamoDB", value: 10, level: 55 },
+            { name: "ECS", value: 11, level: 60 },
+            { name: "Lambda", value: 9, level: 50 }
+          ]
+        },
+        {
+          name: "Docker",
+          level: 55,
+          desc: "Contenedorización y despliegue",
+          children: [
+            { name: "Dockerfile", value: 12, level: 60 },
+            { name: "Compose", value: 11, level: 55 },
+            { name: "Images", value: 10, level: 50 },
+            { name: "Networking", value: 8, level: 45 }
+          ]
+        },
+        {
+          name: "Linux",
+          level: 72,
+          desc: "Administración de sistemas",
+          children: [
+            { name: "Debian", value: 14, level: 75 },
+            { name: "Bash", value: 16, level: 80 },
+            { name: "Systemd", value: 10, level: 65 },
+            { name: "Disk Encrypt", value: 8, level: 60 }
+          ]
+        },
+        {
+          name: "Big Data Infra",
+          level: 48,
+          desc: "Infraestructura de datos distribuidos",
+          children: [
+            { name: "HDFS", value: 13, level: 55 },
+            { name: "Spark", value: 11, level: 45 },
+            { name: "Cloudera", value: 10, level: 40 },
+            { name: "Hive", value: 12, level: 45 }
+          ]
+        },
+        {
+          name: "Monitoring",
+          level: 68,
+          desc: "Monitorización y alertas de procesos",
+          children: [
+            { name: "Control-M", value: 14, level: 72 },
+            { name: "ServiceNow", value: 12, level: 65 },
+            { name: "Alerting", value: 10, level: 60 }
+          ]
+        }
+      ]
+    },
+    {
+      name: "IA Generativa",
+      color: "#a78bfa",
+      level: 32,
+      kpi: "Implementación de flujos de trabajo con Multi-agentes para delegación de tareas complejas, desarrollo de herramientas con APIs de Claude y Gemini, exploración de modelos locales con Ollama y arquitecturas RAG.",
+      children: [
+        {
+          name: "LLMs",
+          level: 35,
+          desc: "Modelos de lenguaje y prompting avanzado",
+          children: [
+            { name: "Claude", value: 14, level: 40 },
+            { name: "Gemini", value: 12, level: 35 },
+            { name: "GPT", value: 11, level: 30 },
+            { name: "Prompting", value: 15, level: 45 },
+            { name: "Fine-tuning", value: 8, level: 20 }
+          ]
+        },
+        {
+          name: "APIs de IA",
+          level: 40,
+          desc: "Integración de servicios de IA vía API",
+          children: [
+            { name: "Claude API", value: 13, level: 42 },
+            { name: "Gemini API", value: 12, level: 38 },
+            { name: "REST", value: 14, level: 50 },
+            { name: "Webhooks", value: 9, level: 35 }
+          ]
+        },
+        {
+          name: "Multi-agentes",
+          level: 25,
+          desc: "Sistemas de agentes autónomos coordinados",
+          children: [
+            { name: "Orquestación", value: 12, level: 28 },
+            { name: "Agent SDK", value: 10, level: 22 },
+            { name: "Delegación", value: 11, level: 25 },
+            { name: "Tool Use", value: 9, level: 30 }
+          ]
+        },
+        {
+          name: "Ollama",
+          level: 30,
+          desc: "Modelos de IA ejecutados localmente",
+          children: [
+            { name: "Llama", value: 11, level: 32 },
+            { name: "Mistral", value: 10, level: 28 },
+            { name: "Embeddings", value: 9, level: 25 },
+            { name: "Local Deploy", value: 8, level: 22 }
+          ]
+        },
+        {
+          name: "RAG",
+          level: 26,
+          desc: "Retrieval-Augmented Generation",
+          children: [
+            { name: "Vector DB", value: 10, level: 25 },
+            { name: "Chunking", value: 9, level: 28 },
+            { name: "Retrieval", value: 11, level: 30 },
+            { name: "Indexing", value: 8, level: 20 }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// ═══════════════════════════════════════
+//  D3 ZOOMABLE CIRCLE PACKING
+// ═══════════════════════════════════════
+const svg = d3.select("#packSvg");
+const container = document.querySelector(".viz-area");
+
+let width, height, focus, view;
+let nodes, circles, labels, subLabels;
+
+// Color map
+const colorMap = {};
+function assignColors(node, parentColor) {
+  const c = node.data.color || parentColor || "#3b82f6";
+  colorMap[node.data.name] = c;
+  if (node.children) node.children.forEach(ch => assignColors(ch, c));
+}
+
+function getColor(d, opacity) {
+  const c = colorMap[d.data.name] || "#3b82f6";
+  return d3.color(c).copy({ opacity });
+}
+
+function resize() {
+  const rect = container.getBoundingClientRect();
+  width = rect.width;
+  height = rect.height;
+  svg.attr("viewBox", `0 0 ${width} ${height}`);
+}
+
+function buildPack() {
+  resize();
+
+  const root = d3.hierarchy(DATA)
+    .sum(d => d.value || 0)
+    .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+  const pack = d3.pack()
+    .size([width, height])
+    .padding(d => d.depth === 0 ? 28 : d.depth === 1 ? 16 : d.depth === 2 ? 8 : 4);
+
+  pack(root);
+  assignColors(root);
+
+  focus = root;
+  view = [root.x, root.y, root.r * 2.05];
+
+  svg.selectAll("*").remove();
+
+  const g = svg.append("g").attr("id", "packGroup");
+
+  // Circles
+  nodes = g.selectAll("circle")
+    .data(root.descendants())
+    .join("circle")
+    .attr("class", "node-circle")
+    .attr("fill", d => {
+      if (d.depth === 0) return "rgba(10,15,30,0.5)";
+      if (!d.children) return getColor(d, 0.18);
+      return getColor(d, d.depth === 1 ? 0.06 : 0.08);
+    })
+    .attr("stroke", d => {
+      if (d.depth === 0) return "rgba(59,130,246,0.12)";
+      return getColor(d, d.depth === 1 ? 0.35 : d.children ? 0.20 : 0.30);
+    })
+    .on("click", (event, d) => {
+      if (focus !== d) { zoomTo(d); event.stopPropagation(); }
+    })
+    .on("mouseenter", (event, d) => {
+      if (d.depth > 0) updatePanel(d);
+      d3.select(event.target).attr("stroke", getColor(d, 0.7));
+    })
+    .on("mouseleave", (event, d) => {
+      d3.select(event.target).attr("stroke", d2 => {
+        if (d2.depth === 0) return "rgba(59,130,246,0.12)";
+        return getColor(d2, d2.depth === 1 ? 0.35 : d2.children ? 0.20 : 0.30);
+      });
+    });
+
+  // Primary labels (shown at current zoom depth)
+  labels = g.selectAll(".node-label")
+    .data(root.descendants())
+    .join("text")
+    .attr("class", "node-label")
+    .attr("font-weight", d => d.children ? 700 : 500)
+    .text(d => d.data.name)
+    .style("display", d => d.depth === 1 ? "block" : "none");
+
+  // Level badges
+  subLabels = g.selectAll(".node-label-mono")
+    .data(root.descendants().filter(d => d.data.level !== undefined))
+    .join("text")
+    .attr("class", "node-label-mono")
+    .text(d => d.data.level + "%")
+    .style("display", "none");
+
+  // Initial zoom
+  zoomView(view, false);
+
+  // Click background to zoom out
+  svg.on("click", () => { if (focus !== root) zoomTo(focus.parent || root); });
+}
+
+function zoomView(v, animate) {
+  const k = Math.min(width, height) / v[2];
+  view = v;
+
+  const transform = d => `translate(${(d.x - v[0]) * k + width / 2},${(d.y - v[1]) * k + height / 2})`;
+
+  if (animate) {
+    nodes.transition().duration(650).ease(d3.easeCubicOut)
+      .attr("transform", transform)
+      .attr("r", d => d.r * k);
+    labels.transition().duration(650).ease(d3.easeCubicOut)
+      .attr("transform", transform)
+      .attr("font-size", d => {
+        const r = d.r * k;
+        if (!d.children) return Math.min(r * 0.35, 13) + "px";
+        return Math.min(r * 0.18, 16) + "px";
+      });
+    subLabels.transition().duration(650).ease(d3.easeCubicOut)
+      .attr("transform", d => {
+        const pos = transform(d);
+        const r = d.r * k;
+        const offset = !d.children ? r * 0.2 : r * 0.12;
+        return pos.replace(/\)$/, '') + `)`;
+      })
+      .attr("dy", d => {
+        const r = d.r * k;
+        return (!d.children ? r * 0.28 : r * 0.14) + "px";
+      })
+      .attr("font-size", d => {
+        const r = d.r * k;
+        return Math.min(r * 0.22, 10) + "px";
+      });
+  } else {
+    nodes.attr("transform", transform).attr("r", d => d.r * k);
+    labels.attr("transform", transform)
+      .attr("font-size", d => {
+        const r = d.r * k;
+        if (!d.children) return Math.min(r * 0.35, 13) + "px";
+        return Math.min(r * 0.18, 16) + "px";
+      });
+    subLabels.attr("transform", transform)
+      .attr("dy", d => {
+        const r = d.r * k;
+        return (!d.children ? r * 0.28 : r * 0.14) + "px";
+      })
+      .attr("font-size", d => {
+        const r = d.r * k;
+        return Math.min(r * 0.22, 10) + "px";
+      });
+  }
+}
+
+function zoomTo(d) {
+  focus = d;
+  const v = [d.x, d.y, d.r * 2.15];
+
+  // Update label visibility
+  labels.style("display", node => {
+    if (d === node) return "none"; // hide the zoomed-in node's own label
+    if (node.parent === d) return "block"; // show direct children
+    if (!node.children && node.parent && node.parent.parent === d) return "block"; // show grandchildren leaves
+    if (d.depth === 0 && node.depth === 1) return "block"; // root view: show top-level
+    return "none";
+  });
+
+  subLabels.style("display", node => {
+    if (node.parent === d) return "block";
+    if (!node.children && node.parent && node.parent.parent === d) return "block";
+    return "none";
+  });
+
+  zoomView(v, true);
+  updateBreadcrumbs(d);
+  updatePanel(d);
+}
+
+// ═══════════════════════════════════════
+//  BREADCRUMBS
+// ═══════════════════════════════════════
+function updateBreadcrumbs(d) {
+  const path = [];
+  let current = d;
+  while (current) {
+    path.unshift(current);
+    current = current.parent;
+  }
+
+  const bc = document.getElementById("breadcrumbs");
+  bc.innerHTML = path.map((p, i) => {
+    const isLast = i === path.length - 1;
+    const name = p.depth === 0 ? "ROOT" : p.data.name;
+    return (i > 0 ? '<span class="bc-sep">›</span>' : '') +
+      `<span class="bc-item${isLast ? ' active' : ''}" data-depth="${i}">${name}</span>`;
+  }).join("");
+
+  bc.querySelectorAll(".bc-item").forEach((item, i) => {
+    item.addEventListener("click", () => zoomTo(path[i]));
+  });
+}
+
+// ═══════════════════════════════════════
+//  INFO PANEL
+// ═══════════════════════════════════════
+function updatePanel(d) {
+  const name = document.getElementById("panelName");
+  const path = document.getElementById("panelPath");
+  const body = document.getElementById("panelBody");
+
+  name.textContent = d.data.name;
+
+  // Build path string
+  const pathParts = [];
+  let cur = d;
+  while (cur) { pathParts.unshift(cur.data.name); cur = cur.parent; }
+  path.textContent = "/ " + pathParts.join(" / ");
+
+  // Build body
+  let html = "";
+
+  // Level bar
+  if (d.data.level !== undefined) {
+    const color = colorMap[d.data.name] || "#3b82f6";
+    html += `
+      <div class="panel-bar-wrap">
+        <div class="panel-bar-label"><span>Nivel de dominio</span><span style="color:${color}">${d.data.level}%</span></div>
+        <div class="panel-bar-track"><div class="panel-bar-fill" style="width:${d.data.level}%;background:${color}"></div></div>
+      </div>`;
+  }
+
+  // Metrics
+  if (d.children) {
+    const totalChildren = d.descendants().length - 1;
+    const leaves = d.leaves().length;
+    const avgLevel = d.descendants().filter(n => n.data.level).reduce((a, n) => a + n.data.level, 0) /
+      (d.descendants().filter(n => n.data.level).length || 1);
+
+    html += `
+      <div class="metric"><span class="metric-label">Sub-nodos</span><span class="metric-val">${d.children.length}</span></div>
+      <div class="metric"><span class="metric-label">Total herramientas</span><span class="metric-val">${leaves}</span></div>
+      <div class="metric"><span class="metric-label">Nivel promedio</span><span class="metric-val">${Math.round(avgLevel)}%</span></div>`;
+  }
+
+  // Description
+  if (d.data.desc) {
+    html += `<div class="metric"><span class="metric-label">Descripción</span><span class="metric-val" style="font-size:0.75rem;max-width:160px;text-align:right;line-height:1.4">${d.data.desc}</span></div>`;
+  }
+
+  // KPI
+  if (d.data.kpi) {
+    html += `<div class="panel-kpi">${d.data.kpi}</div>`;
+  }
+
+  // Children list
+  if (d.children) {
+    const color = colorMap[d.data.name] || "#3b82f6";
+    html += `<div class="panel-children">
+      <div class="panel-child-title">Contenido</div>
+      ${d.children.map(ch => `
+        <div class="panel-child" onclick="zoomToByName('${ch.data.name.replace(/'/g, "\\'")}')">
+          <div class="panel-child-dot" style="background:${color}"></div>
+          <span class="panel-child-name">${ch.data.name}</span>
+          ${ch.data.level !== undefined ? `<span class="panel-child-val">${ch.data.level}%</span>` : `<span class="panel-child-val">${ch.children ? ch.children.length : ''}</span>`}
+        </div>
+      `).join("")}
+    </div>`;
+  }
+
+  body.innerHTML = html;
+}
+
+// Helper to zoom by name from panel clicks
+function zoomToByName(name) {
+  const root = d3.hierarchy(DATA);
+  const allSvgNodes = d3.select("#packGroup").selectAll("circle").data();
+  const target = allSvgNodes.find(n => n.data.name === name);
+  if (target) zoomTo(target);
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+buildPack();
+window.addEventListener("resize", () => { buildPack(); });
+
+// Dynamic years calculation
+var ym = document.getElementById("yearsMetric");
+if (ym) { ym.textContent = Math.floor((Date.now() - new Date('2018-03-01')) / 31557600000) + '+'; }
+
+// Keyboard navigation
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" || e.key === "Backspace") {
+    if (focus && focus.parent) zoomTo(focus.parent);
+  }
+});
+</script>
+</body>
+</html>

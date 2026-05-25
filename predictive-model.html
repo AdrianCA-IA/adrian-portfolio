@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title data-es="Evolución de Conocimiento — Adrian Cajas" data-en="Knowledge Evolution — Adrian Cajas">Evolución de Conocimiento — Adrian Cajas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Azeret+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1c2e;--bg2:#122336;--bg3:#1a3355;
+  --accent:#FFB162;--teal:#A0C9CB;--wine:#6B1A34;--wine-light:#d45c7e;
+  --emerald:#34d399;--purple:#a78bfa;
+  --text:#f0f0f0;--muted:#8899aa;
+  --radius:10px;--radius-lg:16px;
+  --font:'Outfit',system-ui,sans-serif;
+  --mono:'Azeret Mono',monospace;
+  --ease:cubic-bezier(0.22,1,0.36,1);
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font);scroll-behavior:smooth}
+body{min-height:100vh;padding:24px 24px 60px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(15,23,42,.6);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);z-index:10;margin:-24px -24px 24px}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-back{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;border-radius:8px;color:var(--teal);text-decoration:none;font-size:.82rem;font-weight:500;letter-spacing:.02em;background:var(--bg3);border:1px solid rgba(255,255,255,.06);transition:all .2s}
+.topbar-back svg{width:18px;height:18px;flex-shrink:0}
+.topbar-back:hover{color:var(--accent);border-color:rgba(255,177,98,.3);background:rgba(255,177,98,.08)}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,.06)}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.lang-toggle{display:flex;gap:4px}
+.lang-toggle button{background:var(--bg3);border:1px solid rgba(255,255,255,.1);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:.75rem;font-family:var(--font);transition:all .2s}
+.lang-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+
+header{margin-bottom:48px;max-width:700px}
+header h1{font-size:clamp(1.5rem,4vw,2.2rem);font-weight:700;line-height:1.15;letter-spacing:-0.03em}
+header h1 em{font-style:normal;color:var(--accent)}
+header p{color:var(--muted);font-size:.92rem;margin-top:10px;line-height:1.7;max-width:60ch}
+
+/* ══════ TIMELINE ══════ */
+.timeline{position:relative;max-width:800px;margin:0 auto}
+.timeline::before{
+  content:'';position:absolute;left:28px;top:0;bottom:0;width:3px;
+  background:linear-gradient(to bottom,var(--accent),var(--teal),var(--emerald),var(--purple),var(--accent));
+  border-radius:2px;opacity:0.4;
+}
+
+.stage{
+  position:relative;padding:0 0 40px 72px;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.5s var(--ease),transform 0.5s var(--ease);
+}
+.stage.vis{opacity:1;transform:none}
+
+.stage-dot{
+  position:absolute;left:17px;top:4px;
+  width:26px;height:26px;border-radius:50%;
+  border:3px solid var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65rem;font-weight:700;color:var(--bg);
+  z-index:2;transition:transform 0.3s var(--ease),box-shadow 0.3s;
+  cursor:pointer;
+}
+.stage-dot:hover{transform:scale(1.2)}
+.stage.active .stage-dot{box-shadow:0 0 20px rgba(255,177,98,0.4);transform:scale(1.15)}
+
+.stage-content{
+  background:var(--bg2);border:1px solid rgba(160,201,203,0.12);
+  border-radius:var(--radius-lg);padding:24px;
+  transition:border-color 0.3s,box-shadow 0.3s;cursor:pointer;
+}
+.stage-content:hover{border-color:rgba(255,177,98,0.25)}
+.stage.active .stage-content{border-color:var(--accent);box-shadow:0 4px 30px rgba(255,177,98,0.08)}
+
+.stage-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.stage-era{font-family:var(--mono);font-size:0.7rem;color:var(--accent);letter-spacing:0.05em}
+.stage-icon{font-size:1.3rem}
+.stage-title{font-size:1.05rem;font-weight:600;letter-spacing:-0.02em}
+
+.stage-desc{
+  color:var(--muted);font-size:0.88rem;line-height:1.7;
+  max-height:0;overflow:hidden;
+  transition:max-height 0.5s var(--ease),margin-top 0.3s,opacity 0.3s;
+  opacity:0;
+}
+.stage.active .stage-desc{max-height:400px;margin-top:12px;opacity:1}
+
+.stage-skills{
+  display:flex;flex-wrap:wrap;gap:6px;
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height 0.5s var(--ease),margin-top 0.3s,opacity 0.3s;
+}
+.stage.active .stage-skills{max-height:200px;margin-top:14px;opacity:1}
+
+.skill-tag{
+  font-family:var(--mono);font-size:0.68rem;
+  padding:4px 12px;border-radius:100px;
+  border:1px solid rgba(160,201,203,0.2);
+  color:var(--teal);background:rgba(160,201,203,0.06);
+}
+
+.stage-insight{
+  max-height:0;overflow:hidden;opacity:0;
+  transition:max-height 0.5s var(--ease),margin-top 0.3s,opacity 0.3s;
+}
+.stage.active .stage-insight{max-height:200px;margin-top:14px;opacity:1}
+.insight-box{
+  background:linear-gradient(135deg,rgba(255,177,98,0.06),rgba(160,201,203,0.06));
+  border:1px solid rgba(255,177,98,0.15);border-radius:var(--radius);
+  padding:14px 18px;font-size:0.82rem;color:var(--text);line-height:1.6;
+}
+.insight-box strong{color:var(--accent);font-weight:600}
+
+/* ══════ PROGRESS BAR ══════ */
+.progress-wrap{
+  position:sticky;top:16px;z-index:10;
+  background:rgba(13,28,46,0.92);backdrop-filter:blur(12px);
+  border:1px solid rgba(160,201,203,0.1);border-radius:12px;
+  padding:16px 20px;margin-bottom:32px;max-width:800px;margin-left:auto;margin-right:auto;
+}
+.progress-label{font-family:var(--mono);font-size:0.7rem;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.progress-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--teal),var(--emerald));transition:width 0.4s var(--ease)}
+.progress-stages{display:flex;justify-content:space-between;margin-top:8px}
+.progress-pip{
+  width:8px;height:8px;border-radius:50%;background:var(--bg3);
+  transition:background 0.3s,transform 0.3s;cursor:pointer;
+}
+.progress-pip.done{background:var(--accent)}
+.progress-pip.current{background:var(--teal);transform:scale(1.4);box-shadow:0 0 8px rgba(160,201,203,0.4)}
+
+.demo-footer{text-align:center;padding:48px 0 24px;color:var(--muted);font-size:.8rem}
+.demo-footer a{color:var(--teal);text-decoration:none}
+.demo-footer a:hover{color:var(--accent)}
+
+@media(max-width:600px){
+  body{padding:16px 16px 48px}
+  .stage{padding-left:56px}
+  .timeline::before{left:20px}
+  .stage-dot{left:9px;width:24px;height:24px;font-size:0.6rem}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .stage{opacity:1;transform:none;transition:none}
+  .stage-desc,.stage-skills,.stage-insight{transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="index.html#playground" class="topbar-back">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5m0 0l7 7m-7-7l7-7"/></svg>
+      <span data-es="Volver al portfolio" data-en="Back to portfolio">Volver al portfolio</span>
+    </a>
+    <div class="topbar-sep"></div>
+    <span class="topbar-title" data-es="Mi Evolución" data-en="My Evolution">Mi Evolución</span>
+  </div>
+  <div class="topbar-right">
+    <div class="lang-toggle">
+      <button class="active" id="btnEs">ES</button>
+      <button id="btnEn">EN</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1><span data-es="Mi evolución: de" data-en="My evolution: from">Mi evolución: de</span> <em data-es="desarmar" data-en="taking apart">desarmar</em> <span data-es="cosas a" data-en="things to">cosas a</span> <em data-es="construir" data-en="building">construir</em> <span data-es="el futuro" data-en="the future">el futuro</span></h1>
+  <p data-es="Este no es un gráfico genérico. Es mi historia real: cómo la curiosidad de un niño que desmontaba aparatos se convirtió en una carrera en ingeniería de datos e IA. Haz click en cada etapa para explorarla." data-en="This is not a generic chart. It's my real story: how a kid's curiosity taking apart electronics became a career in data engineering and AI. Click each stage to explore it.">Este no es un gráfico genérico. Es mi historia real: cómo la curiosidad de un niño que desmontaba aparatos se convirtió en una carrera en ingeniería de datos e IA. Haz click en cada etapa para explorarla.</p>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-label">
+    <span data-es="Progresión de conocimiento" data-en="Knowledge progression">Progresión de conocimiento</span>
+    <span id="progressPct">0%</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-stages" id="progressPips"></div>
+</div>
+
+<div class="timeline" id="timeline"></div>
+
+<div class="demo-footer">
+  <p data-es="Siguiente etapa: por descubrir. Nunca paro de aprender." data-en="Next stage: to be discovered. I never stop learning.">Siguiente etapa: por descubrir. Nunca paro de aprender.</p>
+  <a href="index.html#playground" data-es="← Volver al portfolio" data-en="← Back to portfolio">← Volver al portfolio</a>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const stages = [
+  {
+    era: { es: 'Infancia', en: 'Childhood' },
+    icon: '🔧',
+    title: { es: 'Desarmar objetos electrónicos', en: 'Taking apart electronics' },
+    desc: {
+      es: 'Todo empezó desmontando radios, mandos y cualquier aparato que cayera en mis manos. No sabía qué hacía cada pieza, pero necesitaba entender cómo funcionaban las cosas por dentro.',
+      en: 'It all started by taking apart radios, remotes, and anything I could get my hands on. I didn\'t know what each piece did, but I needed to understand how things worked inside.'
+    },
+    skills: [],
+    insight: { es: 'Esto me dice de mí: <strong>curiosidad innata</strong> y necesidad de entender los sistemas desde sus piezas más pequeñas.', en: 'What this says about me: <strong>innate curiosity</strong> and the need to understand systems from their smallest parts.' },
+    color: '#FFB162'
+  },
+  {
+    era: { es: 'Adolescencia', en: 'Teenage years' },
+    icon: '🔌',
+    title: { es: 'Aprender a armarlos de nuevo', en: 'Learning to put them back together' },
+    desc: {
+      es: 'Pasé de destruir a construir. Soldaba componentes, reparaba cosas rotas, y empecé a entender que cada pieza tiene una función en el sistema. Si faltaba una, nada funcionaba.',
+      en: 'I went from breaking to building. Soldering components, fixing broken things, and understanding that each part has a function in the system. If one was missing, nothing worked.'
+    },
+    skills: ['Soldadura', 'Electrónica básica', 'Resolución de problemas'],
+    insight: { es: 'Esto me dice de mí: <strong>mentalidad de constructor</strong> — no solo analizo, también reparo y creo.', en: 'What this says about me: <strong>builder mindset</strong> — I don\'t just analyze, I also repair and create.' },
+    color: '#FFB162'
+  },
+  {
+    era: { es: 'Primeros pasos digitales', en: 'First digital steps' },
+    icon: '🌐',
+    title: { es: 'Internet y matemáticas aplicadas', en: 'Internet and applied math' },
+    desc: {
+      es: 'Descubrí internet y me obsesioné con entender cómo funcionaban las redes. Las matemáticas dejaron de ser abstractas cuando vi que servían para hacer que los ordenadores resolvieran problemas reales.',
+      en: 'I discovered the internet and became obsessed with understanding how networks worked. Math stopped being abstract when I saw it could make computers solve real problems.'
+    },
+    skills: ['Redes', 'TCP/IP', 'Matemáticas', 'Lógica'],
+    insight: { es: 'Esto me dice de mí: <strong>conectar teoría con práctica</strong> — aprendo mejor cuando veo la aplicación real.', en: 'What this says about me: <strong>connecting theory with practice</strong> — I learn best when I see real-world applications.' },
+    color: '#A0C9CB'
+  },
+  {
+    era: { es: 'Exploración', en: 'Exploration' },
+    icon: '💻',
+    title: { es: 'Apps, experimentación y autodidacta', en: 'Apps, experimentation & self-taught' },
+    desc: {
+      es: 'Instalaba todo tipo de software, probaba, rompía, volvía a instalar. Aprendí más rompiendo cosas que en cualquier clase. Cada error era una lección sobre cómo funcionan los sistemas operativos.',
+      en: 'I installed all kinds of software, tested, broke, reinstalled. I learned more by breaking things than in any class. Every error was a lesson about how operating systems work.'
+    },
+    skills: ['Windows', 'Linux', 'Troubleshooting', 'Autodidacta'],
+    insight: { es: 'Esto me dice de mí: <strong>aprendizaje por experimentación</strong> — no tengo miedo a romper cosas para entenderlas.', en: 'What this says about me: <strong>learning by experimentation</strong> — I\'m not afraid to break things to understand them.' },
+    color: '#A0C9CB'
+  },
+  {
+    era: { es: 'Formación', en: 'Education' },
+    icon: '🎓',
+    title: { es: 'Programación formal', en: 'Formal programming' },
+    desc: {
+      es: 'Di el salto de "usuario que toca cosas" a "persona que crea cosas". Aprendí Java, PHP, JavaScript. Entendí que programar no es escribir código: es pensar en soluciones.',
+      en: 'I made the leap from "user who tinkers" to "person who creates". Learned Java, PHP, JavaScript. Understood that programming isn\'t writing code: it\'s thinking in solutions.'
+    },
+    skills: ['Java', 'PHP', 'JavaScript', 'HTML/CSS', 'Git'],
+    insight: { es: 'Esto me dice de mí: <strong>capacidad de formalizar conocimiento autodidacta</strong> y convertirlo en competencia profesional.', en: 'What this says about me: <strong>ability to formalize self-taught knowledge</strong> and turn it into professional competence.' },
+    color: '#34d399'
+  },
+  {
+    era: { es: 'Especialización', en: 'Specialization' },
+    icon: '🗄️',
+    title: { es: 'Bases de datos y backend', en: 'Databases and backend' },
+    desc: {
+      es: 'Descubrí que los datos son el corazón de todo sistema. SQL, MongoDB, diseño de esquemas. Empecé a ver los datos no como filas en una tabla, sino como historias que contar.',
+      en: 'I discovered that data is the heart of every system. SQL, MongoDB, schema design. I started seeing data not as rows in a table, but as stories to tell.'
+    },
+    skills: ['SQL', 'PostgreSQL', 'MongoDB', 'Oracle', 'Data modeling'],
+    insight: { es: 'Esto me dice de mí: <strong>pensamiento estructurado</strong> — organizo la información para que otros puedan usarla.', en: 'What this says about me: <strong>structured thinking</strong> — I organize information so others can use it.' },
+    color: '#34d399'
+  },
+  {
+    era: { es: 'Carrera profesional', en: 'Professional career' },
+    icon: '📊',
+    title: { es: 'Análisis de datos y ETL', en: 'Data analysis and ETL' },
+    desc: {
+      es: 'Mi primer trabajo real con datos: construir pipelines, transformar información, alimentar dashboards. Informatica Cloud, IICS, Python, Power BI. Aquí encontré mi especialidad.',
+      en: 'My first real job with data: building pipelines, transforming information, feeding dashboards. Informatica Cloud, IICS, Python, Power BI. This is where I found my specialty.'
+    },
+    skills: ['Informatica Cloud', 'IICS', 'Python', 'Power BI', 'ETL', 'Control-M'],
+    insight: { es: 'Esto me dice de mí: <strong>+7 años haciendo esto profesionalmente</strong> — no es un hobby, es mi especialidad.', en: 'What this says about me: <strong>7+ years doing this professionally</strong> — it\'s not a hobby, it\'s my specialty.' },
+    color: '#d45c7e'
+  },
+  {
+    era: { es: 'Big Data', en: 'Big Data' },
+    icon: '🚀',
+    title: { es: 'Datos masivos y cloud', en: 'Massive data and cloud' },
+    desc: {
+      es: 'Salté de mover miles de registros a mover millones. AWS, Spark, Hadoop. Migraciones masivas entre plataformas Salesforce, procesamiento distribuido. Los problemas cambiaron de escala.',
+      en: 'I jumped from moving thousands of records to moving millions. AWS, Spark, Hadoop. Massive migrations between Salesforce platforms, distributed processing. Problems changed in scale.'
+    },
+    skills: ['AWS', 'Spark', 'Scala', 'HDFS', 'Hive', 'Docker'],
+    insight: { es: 'Esto me dice de mí: <strong>capacidad de escalar</strong> — lo que funciona con 1.000 registros no siempre funciona con 10 millones.', en: 'What this says about me: <strong>ability to scale</strong> — what works with 1,000 records doesn\'t always work with 10 million.' },
+    color: '#d45c7e'
+  },
+  {
+    era: { es: 'Presente', en: 'Present' },
+    icon: '🤖',
+    title: { es: 'Inteligencia Artificial', en: 'Artificial Intelligence' },
+    desc: {
+      es: 'Ahora trabajo con LLMs, agentes de IA, RAG, y APIs de modelos como Claude y Gemini. Combino mi experiencia en datos con IA para automatizar y crear soluciones que antes eran imposibles.',
+      en: 'Now I work with LLMs, AI agents, RAG, and model APIs like Claude and Gemini. I combine my data experience with AI to automate and create solutions that were previously impossible.'
+    },
+    skills: ['LLMs', 'Claude API', 'Gemini API', 'RAG', 'Multi-agentes', 'Ollama'],
+    insight: { es: 'Esto me dice de mí: <strong>siempre en la frontera</strong> — no me quedo en lo que ya sé, busco lo que viene.', en: 'What this says about me: <strong>always on the frontier</strong> — I don\'t stay with what I know, I seek what\'s coming.' },
+    color: '#a78bfa'
+  },
+  {
+    era: { es: 'Futuro', en: 'Future' },
+    icon: '✨',
+    title: { es: '¿Qué viene después?', en: 'What comes next?' },
+    desc: {
+      es: 'Aún no lo sé, y eso es lo mejor. Cada etapa de esta línea empezó sin saber a dónde me llevaría. Lo que sí sé: voy a seguir aprendiendo, rompiendo cosas, y construyendo otras nuevas.',
+      en: 'I don\'t know yet, and that\'s the best part. Every stage of this timeline started without knowing where it would lead. What I do know: I\'ll keep learning, breaking things, and building new ones.'
+    },
+    skills: [],
+    insight: { es: 'Esto me dice de mí: <strong>mentalidad de crecimiento</strong> — mi mejor proyecto es el que todavía no he empezado.', en: 'What this says about me: <strong>growth mindset</strong> — my best project is the one I haven\'t started yet.' },
+    color: '#a78bfa'
+  }
+];
+
+let lang = (function(){ try{ var s=localStorage.getItem('portfolio-lang'); return (s==='en')?'en':'es'; }catch(e){ return 'es'; } })();
+let activeIdx = -1;
+
+// Build timeline
+const tl = document.getElementById('timeline');
+const pips = document.getElementById('progressPips');
+
+stages.forEach(function(s, i) {
+  // Timeline stage
+  const div = document.createElement('div');
+  div.className = 'stage';
+  div.setAttribute('data-idx', i);
+  div.innerHTML =
+    '<div class="stage-dot" style="background:' + s.color + '">' + (i + 1) + '</div>' +
+    '<div class="stage-content">' +
+      '<div class="stage-header">' +
+        '<span class="stage-era">' + s.era[lang] + '</span>' +
+        '<span class="stage-icon">' + s.icon + '</span>' +
+      '</div>' +
+      '<div class="stage-title">' + s.title[lang] + '</div>' +
+      '<div class="stage-desc"><p>' + s.desc[lang] + '</p></div>' +
+      '<div class="stage-skills">' + s.skills.map(function(sk) { return '<span class="skill-tag">' + sk + '</span>'; }).join('') + '</div>' +
+      '<div class="stage-insight"><div class="insight-box">' + s.insight[lang] + '</div></div>' +
+    '</div>';
+  div.addEventListener('click', function() { toggleStage(i); });
+  tl.appendChild(div);
+
+  // Progress pip
+  const pip = document.createElement('div');
+  pip.className = 'progress-pip';
+  pip.title = s.title[lang];
+  pip.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleStage(i);
+    document.querySelectorAll('.stage')[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  pips.appendChild(pip);
+});
+
+function toggleStage(idx) {
+  const stageEls = document.querySelectorAll('.stage');
+  const pipEls = document.querySelectorAll('.progress-pip');
+
+  if (activeIdx === idx) {
+    stageEls[idx].classList.remove('active');
+    activeIdx = -1;
+  } else {
+    stageEls.forEach(function(el) { el.classList.remove('active'); });
+    stageEls[idx].classList.add('active');
+    activeIdx = idx;
+  }
+
+  // Update progress
+  var maxReached = -1;
+  stageEls.forEach(function(el, i) {
+    if (el.classList.contains('active') || i <= activeIdx) maxReached = i;
+  });
+
+  pipEls.forEach(function(pip, i) {
+    pip.classList.remove('done', 'current');
+    if (i < activeIdx) pip.classList.add('done');
+    else if (i === activeIdx) pip.classList.add('current');
+  });
+
+  var pct = activeIdx >= 0 ? Math.round(((activeIdx + 1) / stages.length) * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+// Scroll reveal
+var obs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) e.target.classList.add('vis');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.stage').forEach(function(el) { obs.observe(el); });
+
+// Language toggle
+function setLang(newLang) {
+  lang = newLang;
+  try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
+  document.getElementById('btnEs').classList.toggle('active', lang === 'es');
+  document.getElementById('btnEn').classList.toggle('active', lang === 'en');
+  document.documentElement.lang = lang;
+
+  // Update all data-es/data-en elements
+  document.querySelectorAll('[data-es][data-en]').forEach(function(el) {
+    var t = el.getAttribute('data-' + lang);
+    if (el.children.length > 0 && el.tagName !== 'H1') {
+      // has child elements, update text nodes only
+      for (var i = 0; i < el.childNodes.length; i++) {
+        if (el.childNodes[i].nodeType === Node.TEXT_NODE && el.childNodes[i].textContent.trim()) {
+          el.childNodes[i].textContent = t;
+        }
+      }
+    } else {
+      el.innerHTML = t;
+    }
+  });
+
+  // Rebuild stages text
+  var stageEls = document.querySelectorAll('.stage');
+  stages.forEach(function(s, i) {
+    var el = stageEls[i];
+    el.querySelector('.stage-era').textContent = s.era[lang];
+    el.querySelector('.stage-title').textContent = s.title[lang];
+    el.querySelector('.stage-desc p').textContent = s.desc[lang];
+    el.querySelector('.insight-box').innerHTML = s.insight[lang];
+  });
+
+  // Update pip titles
+  var pipEls = document.querySelectorAll('.progress-pip');
+  stages.forEach(function(s, i) { pipEls[i].title = s.title[lang]; });
+}
+
+document.getElementById('btnEs').addEventListener('click', function() { setLang('es'); });
+document.getElementById('btnEn').addEventListener('click', function() { setLang('en'); });
+
+// Auto-open first stage after a beat
+setTimeout(function() { toggleStage(0); }, 800);
+
+// Apply saved language
+if(lang!=='es') setLang(lang);
+
+})();
+</script>
+</body>
+</html>
