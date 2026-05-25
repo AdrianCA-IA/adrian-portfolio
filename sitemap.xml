@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/index.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/index.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/skill-clustering.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/skill-clustering.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/predictive-model.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/predictive-model.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/decision-tree.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/decision-tree.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/random-forest.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/random-forest.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://storage.googleapis.com/my-bucket-portfolio/circle-packing.html</loc>
+    <loc>https://adrian-cajas-portfolio.web.app/circle-packing.html</loc>
     <lastmod>2026-05-25</lastmod>
     <priority>0.7</priority>
   </url>
