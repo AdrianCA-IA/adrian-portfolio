@@ -294,16 +294,16 @@ body{
   </div>
   <div class="info-panel" id="infoPanel">
     <div class="panel-header">
-      <div class="panel-label">Nodo seleccionado</div>
+      <div class="panel-label" data-es="Nodo seleccionado" data-en="Selected node">Nodo seleccionado</div>
       <div class="panel-name" id="panelName">Adrian Cajas</div>
       <div class="panel-path" id="panelPath">/ root</div>
     </div>
     <div class="panel-body" id="panelBody">
-      <div class="metric"><span class="metric-label">Áreas maestras</span><span class="metric-val">3</span></div>
-      <div class="metric"><span class="metric-label">Skills totales</span><span class="metric-val">15</span></div>
-      <div class="metric"><span class="metric-label">Herramientas</span><span class="metric-val">58</span></div>
-      <div class="metric"><span class="metric-label">Años exp.</span><span class="metric-val" id="yearsMetric">7+</span></div>
-      <div class="panel-kpi">Ingeniero de Datos e IA con +5 años construyendo pipelines masivos, automatizando ETL y explorando LLMs e inteligencia artificial.</div>
+      <div class="metric"><span class="metric-label" data-es="Áreas maestras" data-en="Core areas">Áreas maestras</span><span class="metric-val">3</span></div>
+      <div class="metric"><span class="metric-label" data-es="Skills totales" data-en="Total skills">Skills totales</span><span class="metric-val">15</span></div>
+      <div class="metric"><span class="metric-label" data-es="Herramientas" data-en="Tools">Herramientas</span><span class="metric-val">58</span></div>
+      <div class="metric"><span class="metric-label" data-es="Años exp." data-en="Years exp.">Años exp.</span><span class="metric-val" id="yearsMetric">7+</span></div>
+      <div class="panel-kpi" id="rootKpi" data-es="Ingeniero de Datos e IA con +{y} años construyendo pipelines masivos, automatizando ETL y explorando LLMs e inteligencia artificial." data-en="Data Engineer & AI with +{y} years building massive data pipelines, automating ETL and actively exploring LLMs and applied artificial intelligence.">Ingeniero de Datos e IA con +<span id="kpiYears">8</span> años construyendo pipelines masivos, automatizando ETL y explorando LLMs e inteligencia artificial.</div>
     </div>
   </div>
 </div>
@@ -312,8 +312,8 @@ body{
 <div class="bottombar">
   <div class="bb-hint">
     <span><span class="bb-key">Click</span> Zoom in</span>
-    <span><span class="bb-key">Click centro</span> Zoom out</span>
-    <span><span class="bb-key">Hover</span> Detalles</span>
+    <span><span class="bb-key" data-es="Click centro" data-en="Click center">Click centro</span> Zoom out</span>
+    <span><span class="bb-key">Hover</span> <span data-es="Detalles" data-en="Details">Detalles</span></span>
   </div>
   <span>&copy; 2026 Adrian Cajas — Data Command Center</span>
 </div>
@@ -322,13 +322,18 @@ body{
 // ═══════════════════════════════════════
 //  LANGUAGE TOGGLE (basic — full i18n pending)
 // ═══════════════════════════════════════
+var currentLang = 'es';
 function setLang(lang){
+  currentLang = lang;
   try{ localStorage.setItem('portfolio-lang', lang); }catch(e){}
   document.querySelectorAll('.lang-toggle button').forEach(b=>b.classList.remove('active'));
   document.querySelector('.lang-toggle button:nth-child('+(lang==='es'?'1':'2')+')').classList.add('active');
+  var dynY = Math.floor((Date.now() - new Date('2018-03-01')) / 31557600000);
   document.querySelectorAll('[data-es][data-en]').forEach(el=>{
-    const t=el.getAttribute('data-'+lang);
-    if(el.children.length===0) el.textContent=t;
+    var t = el.getAttribute('data-'+lang);
+    if(t.indexOf('{y}') !== -1) t = t.replace('{y}', dynY);
+    if(el.children.length===0) el.textContent = t;
+    else if(el.id === 'rootKpi') el.innerHTML = t;
   });
 }
 (function(){var s=localStorage.getItem('portfolio-lang');if(s) setLang(s);})();
@@ -338,18 +343,19 @@ function setLang(lang){
 // ═══════════════════════════════════════
 const DATA = {
   name: "Adrian Cajas",
-  desc: "Ingeniero de Datos e IA — +7 años de experiencia",
+  desc: "Ingeniero de Datos e IA",
   children: [
     {
       name: "ETL & Data Integration",
       color: "#3b82f6",
       level: 85,
       kpi: "Migración masiva de datos entre plataformas Salesforce, procesamiento de millones de registros con Informatica Cloud, automatización de pipelines ETL con IICS y orquestación de procesos con Control-M.",
+      kpi_en: "Massive data migration across Salesforce platforms, processing millions of records with Informatica Cloud, ETL pipeline automation with IICS and process orchestration with Control-M.",
       children: [
         {
           name: "Informatica Cloud",
           level: 88,
-          desc: "Plataforma principal de integración de datos",
+          desc: "Plataforma principal de integración de datos", desc_en: "Main data integration platform",
           children: [
             { name: "Data Integration", value: 18, level: 90 },
             { name: "Mass Ingestion", value: 14, level: 85 },
@@ -361,7 +367,7 @@ const DATA = {
         {
           name: "IICS",
           level: 82,
-          desc: "Informatica Intelligent Cloud Services",
+          desc: "Informatica Intelligent Cloud Services", desc_en: "Informatica Intelligent Cloud Services",
           children: [
             { name: "CDI", value: 15, level: 85 },
             { name: "CAI", value: 12, level: 78 },
@@ -373,7 +379,7 @@ const DATA = {
         {
           name: "Salesforce",
           level: 75,
-          desc: "Integración y migración de datos CRM",
+          desc: "Integración y migración de datos CRM", desc_en: "CRM data integration and migration",
           children: [
             { name: "Bulk API", value: 12, level: 78 },
             { name: "Data Loader", value: 10, level: 80 },
@@ -384,7 +390,7 @@ const DATA = {
         {
           name: "Python ETL",
           level: 85,
-          desc: "Automatización y extracción de datos",
+          desc: "Automatización y extracción de datos", desc_en: "Data automation and extraction",
           children: [
             { name: "Pandas", value: 16, level: 88 },
             { name: "Jupyter", value: 12, level: 85 },
@@ -395,7 +401,7 @@ const DATA = {
         {
           name: "Bases de datos",
           level: 70,
-          desc: "SQL y NoSQL para pipelines de datos",
+          desc: "SQL y NoSQL para pipelines de datos", desc_en: "SQL & NoSQL for data pipelines",
           children: [
             { name: "Oracle", value: 12, level: 65 },
             { name: "PostgreSQL", value: 11, level: 70 },
@@ -410,11 +416,12 @@ const DATA = {
       color: "#22d3ee",
       level: 62,
       kpi: "Despliegue y administración de servicios en AWS, contenedorización con Docker, administración avanzada de Linux, gestión de datos distribuidos en HDFS y monitorización de procesos batch en producción.",
+      kpi_en: "Deployment and management of AWS services, containerization with Docker, advanced Linux administration, distributed data management in HDFS and batch process monitoring in production.",
       children: [
         {
           name: "AWS",
           level: 65,
-          desc: "Amazon Web Services — servicios cloud",
+          desc: "Amazon Web Services — servicios cloud", desc_en: "Amazon Web Services — cloud services",
           children: [
             { name: "EC2", value: 14, level: 70 },
             { name: "S3", value: 16, level: 75 },
@@ -427,7 +434,7 @@ const DATA = {
         {
           name: "Docker",
           level: 55,
-          desc: "Contenedorización y despliegue",
+          desc: "Contenedorización y despliegue", desc_en: "Containerization and deployment",
           children: [
             { name: "Dockerfile", value: 12, level: 60 },
             { name: "Compose", value: 11, level: 55 },
@@ -438,7 +445,7 @@ const DATA = {
         {
           name: "Linux",
           level: 72,
-          desc: "Administración de sistemas",
+          desc: "Administración de sistemas", desc_en: "Systems administration",
           children: [
             { name: "Debian", value: 14, level: 75 },
             { name: "Bash", value: 16, level: 80 },
@@ -449,7 +456,7 @@ const DATA = {
         {
           name: "Big Data Infra",
           level: 48,
-          desc: "Infraestructura de datos distribuidos",
+          desc: "Infraestructura de datos distribuidos", desc_en: "Distributed data infrastructure",
           children: [
             { name: "HDFS", value: 13, level: 55 },
             { name: "Spark", value: 11, level: 45 },
@@ -460,7 +467,7 @@ const DATA = {
         {
           name: "Monitoring",
           level: 68,
-          desc: "Monitorización y alertas de procesos",
+          desc: "Monitorización y alertas de procesos", desc_en: "Process monitoring and alerting",
           children: [
             { name: "Control-M", value: 14, level: 72 },
             { name: "ServiceNow", value: 12, level: 65 },
@@ -474,11 +481,12 @@ const DATA = {
       color: "#a78bfa",
       level: 32,
       kpi: "Implementación de flujos de trabajo con Multi-agentes para delegación de tareas complejas, desarrollo de herramientas con APIs de Claude y Gemini, exploración de modelos locales con Ollama y arquitecturas RAG.",
+      kpi_en: "Multi-agent workflow implementation for complex task delegation, tool development with Claude and Gemini APIs, local model exploration with Ollama and RAG architectures.",
       children: [
         {
           name: "LLMs",
           level: 35,
-          desc: "Modelos de lenguaje y prompting avanzado",
+          desc: "Modelos de lenguaje y prompting avanzado", desc_en: "Language models and advanced prompting",
           children: [
             { name: "Claude", value: 14, level: 40 },
             { name: "Gemini", value: 12, level: 35 },
@@ -490,7 +498,7 @@ const DATA = {
         {
           name: "APIs de IA",
           level: 40,
-          desc: "Integración de servicios de IA vía API",
+          desc: "Integración de servicios de IA vía API", desc_en: "AI service integration via API",
           children: [
             { name: "Claude API", value: 13, level: 42 },
             { name: "Gemini API", value: 12, level: 38 },
@@ -501,7 +509,7 @@ const DATA = {
         {
           name: "Multi-agentes",
           level: 25,
-          desc: "Sistemas de agentes autónomos coordinados",
+          desc: "Sistemas de agentes autónomos coordinados", desc_en: "Coordinated autonomous agent systems",
           children: [
             { name: "Orquestación", value: 12, level: 28 },
             { name: "Agent SDK", value: 10, level: 22 },
@@ -512,7 +520,7 @@ const DATA = {
         {
           name: "Ollama",
           level: 30,
-          desc: "Modelos de IA ejecutados localmente",
+          desc: "Modelos de IA ejecutados localmente", desc_en: "Locally-run AI models",
           children: [
             { name: "Llama", value: 11, level: 32 },
             { name: "Mistral", value: 10, level: 28 },
@@ -523,7 +531,7 @@ const DATA = {
         {
           name: "RAG",
           level: 26,
-          desc: "Retrieval-Augmented Generation",
+          desc: "Retrieval-Augmented Generation", desc_en: "Retrieval-Augmented Generation",
           children: [
             { name: "Vector DB", value: 10, level: 25 },
             { name: "Chunking", value: 9, level: 28 },
@@ -757,12 +765,14 @@ function updatePanel(d) {
   // Build body
   let html = "";
 
+  var L = currentLang || 'es';
+
   // Level bar
   if (d.data.level !== undefined) {
     const color = colorMap[d.data.name] || "#3b82f6";
     html += `
       <div class="panel-bar-wrap">
-        <div class="panel-bar-label"><span>Nivel de dominio</span><span style="color:${color}">${d.data.level}%</span></div>
+        <div class="panel-bar-label"><span>${L==='es'?'Nivel de dominio':'Proficiency level'}</span><span style="color:${color}">${d.data.level}%</span></div>
         <div class="panel-bar-track"><div class="panel-bar-fill" style="width:${d.data.level}%;background:${color}"></div></div>
       </div>`;
   }
@@ -775,26 +785,28 @@ function updatePanel(d) {
       (d.descendants().filter(n => n.data.level).length || 1);
 
     html += `
-      <div class="metric"><span class="metric-label">Sub-nodos</span><span class="metric-val">${d.children.length}</span></div>
-      <div class="metric"><span class="metric-label">Total herramientas</span><span class="metric-val">${leaves}</span></div>
-      <div class="metric"><span class="metric-label">Nivel promedio</span><span class="metric-val">${Math.round(avgLevel)}%</span></div>`;
+      <div class="metric"><span class="metric-label">${L==='es'?'Sub-nodos':'Sub-nodes'}</span><span class="metric-val">${d.children.length}</span></div>
+      <div class="metric"><span class="metric-label">${L==='es'?'Total herramientas':'Total tools'}</span><span class="metric-val">${leaves}</span></div>
+      <div class="metric"><span class="metric-label">${L==='es'?'Nivel promedio':'Avg. level'}</span><span class="metric-val">${Math.round(avgLevel)}%</span></div>`;
   }
 
   // Description
   if (d.data.desc) {
-    html += `<div class="metric"><span class="metric-label">Descripción</span><span class="metric-val" style="font-size:0.75rem;max-width:160px;text-align:right;line-height:1.4">${d.data.desc}</span></div>`;
+    var descText = (L==='en' && d.data.desc_en) ? d.data.desc_en : d.data.desc;
+    html += `<div class="metric"><span class="metric-label">${L==='es'?'Descripción':'Description'}</span><span class="metric-val" style="font-size:0.75rem;max-width:160px;text-align:right;line-height:1.4">${descText}</span></div>`;
   }
 
   // KPI
   if (d.data.kpi) {
-    html += `<div class="panel-kpi">${d.data.kpi}</div>`;
+    var kpiText = (L==='en' && d.data.kpi_en) ? d.data.kpi_en : d.data.kpi;
+    html += `<div class="panel-kpi">${kpiText}</div>`;
   }
 
   // Children list
   if (d.children) {
     const color = colorMap[d.data.name] || "#3b82f6";
     html += `<div class="panel-children">
-      <div class="panel-child-title">Contenido</div>
+      <div class="panel-child-title">${L==='es'?'Contenido':'Contents'}</div>
       ${d.children.map(ch => `
         <div class="panel-child" onclick="zoomToByName('${ch.data.name.replace(/'/g, "\\'")}')">
           <div class="panel-child-dot" style="background:${color}"></div>
@@ -823,8 +835,11 @@ buildPack();
 window.addEventListener("resize", () => { buildPack(); });
 
 // Dynamic years calculation
+var dynYears = Math.floor((Date.now() - new Date('2018-03-01')) / 31557600000);
 var ym = document.getElementById("yearsMetric");
-if (ym) { ym.textContent = Math.floor((Date.now() - new Date('2018-03-01')) / 31557600000) + '+'; }
+if (ym) { ym.textContent = dynYears + '+'; }
+var ky = document.getElementById("kpiYears");
+if (ky) { ky.textContent = dynYears; }
 
 // Keyboard navigation
 document.addEventListener("keydown", e => {
