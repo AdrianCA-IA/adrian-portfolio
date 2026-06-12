@@ -313,6 +313,9 @@ section{position:relative;z-index:1}
 .stack-group.ai .stack-group-title::before{background:var(--teal)}
 .stack-group.devops .stack-group-title::before{background:#d45c7e}
 .stack-group.bi .stack-group-title::before{background:var(--emerald)}
+.stack-group.ai-dev .stack-group-title{color:#a78bfa}
+.stack-group.ai-dev .stack-group-title::before{background:#a78bfa}
+.stack-group.ai-dev .stack-tag{border-color:rgba(167,139,250,0.25)}
 .stack-group.other .stack-group-title::before{background:var(--text-3)}
 .stack-grid{display:flex;flex-wrap:wrap;gap:10px}
 .stack-tag{
@@ -326,7 +329,7 @@ section{position:relative;z-index:1}
 .hobbies{padding:96px 0}
 .hobby-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
 .hobby-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
   padding:28px 24px;text-align:center;transition:all .35s var(--ease);position:relative;overflow:hidden;
 }
 .hobby-card::before{
@@ -339,7 +342,40 @@ section{position:relative;z-index:1}
 .hobby-icon{font-size:2.2rem;margin-bottom:14px;display:inline-block;transition:transform .3s var(--ease)}
 .hobby-card:hover .hobby-icon{transform:scale(1.15) rotate(-5deg)}
 .hobby-title{font-weight:600;font-size:1rem;margin-bottom:8px;letter-spacing:-.01em}
-.hobby-desc{color:var(--muted);font-size:.82rem;line-height:1.65}
+.hobby-desc{color:var(--text-2);font-size:.82rem;line-height:1.65}
+
+/* ══════════ PROJECTS ══════════ */
+.projects{padding:96px 0}
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px}
+.proj-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+  padding:24px;transition:all .3s var(--ease);
+  display:flex;flex-direction:column;gap:12px;
+  text-decoration:none;color:var(--text);position:relative;
+}
+.proj-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.proj-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.proj-icon{font-size:1.9rem;line-height:1}
+.proj-badge{
+  font-family:var(--mono);font-size:.62rem;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
+  color:var(--teal);background:var(--teal-glow);
+  border:1px solid rgba(160,201,203,.25);
+  padding:4px 10px;border-radius:100px;
+}
+.proj-badge.accent{color:var(--accent);background:var(--accent-glow);border-color:rgba(255,177,98,.25)}
+.proj-title{font-weight:700;font-size:1rem;letter-spacing:-.01em}
+.proj-desc{font-size:.82rem;color:var(--text-2);line-height:1.65;flex:1}
+.proj-tags{display:flex;flex-wrap:wrap;gap:8px}
+.proj-tags span{
+  font-family:var(--mono);font-size:.66rem;color:var(--text-3);
+  border:1px solid var(--border);padding:4px 10px;border-radius:8px;
+}
+.proj-link{
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--mono);font-size:.7rem;font-weight:600;color:var(--accent);
+}
+.proj-link svg{width:13px;height:13px}
 
 /* ══════════ PLAYGROUND ══════════ */
 .playground{padding:96px 0}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200">
+<title>OG Image — Adrian Cajas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow: hidden; background: #0a0a0a; }
+  body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+
+  .card {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    background: #0d1c2e;
+    overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  /* ── Particle-style dot pattern ── */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(1.5px 1.5px at 80px 50px, rgba(160,201,203,0.25) 50%, transparent 51%),
+      radial-gradient(1px 1px at 200px 120px, rgba(160,201,203,0.18) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 350px 80px, rgba(255,177,98,0.2) 50%, transparent 51%),
+      radial-gradient(1px 1px at 500px 200px, rgba(160,201,203,0.15) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 700px 100px, rgba(160,201,203,0.22) 50%, transparent 51%),
+      radial-gradient(1px 1px at 850px 300px, rgba(255,177,98,0.12) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 950px 150px, rgba(160,201,203,0.2) 50%, transparent 51%),
+      radial-gradient(1px 1px at 1100px 250px, rgba(160,201,203,0.18) 50%, transparent 51%),
+      radial-gradient(1px 1px at 150px 400px, rgba(160,201,203,0.15) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 400px 450px, rgba(255,177,98,0.15) 50%, transparent 51%),
+      radial-gradient(1px 1px at 600px 500px, rgba(160,201,203,0.18) 50%, transparent 51%),
+      radial-gradient(1px 1px at 800px 480px, rgba(160,201,203,0.12) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 1050px 420px, rgba(255,177,98,0.18) 50%, transparent 51%),
+      radial-gradient(1px 1px at 300px 560px, rgba(160,201,203,0.15) 50%, transparent 51%),
+      radial-gradient(1px 1px at 750px 580px, rgba(160,201,203,0.12) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 1000px 550px, rgba(160,201,203,0.2) 50%, transparent 51%),
+      radial-gradient(1px 1px at 50px 280px, rgba(255,177,98,0.1) 50%, transparent 51%),
+      radial-gradient(1px 1px at 450px 320px, rgba(160,201,203,0.14) 50%, transparent 51%),
+      radial-gradient(1.5px 1.5px at 650px 350px, rgba(255,177,98,0.16) 50%, transparent 51%),
+      radial-gradient(1px 1px at 900px 60px, rgba(160,201,203,0.18) 50%, transparent 51%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* ── Subtle connecting lines ── */
+  .card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(135deg, transparent 40%, rgba(160,201,203,0.03) 50%, transparent 60%),
+      linear-gradient(45deg, transparent 30%, rgba(255,177,98,0.02) 50%, transparent 70%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    padding: 52px 72px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ── Logo ── */
+  .logo {
+    position: absolute;
+    top: 48px;
+    left: 72px;
+    font-family: 'Azeret Mono', monospace;
+    font-size: 26px;
+    font-weight: 500;
+    color: #FFB162;
+    letter-spacing: -0.5px;
+  }
+
+  /* ── Title ── */
+  .title {
+    font-size: 82px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 8px;
+  }
+  .title .accent {
+    color: #FFB162;
+    border-bottom: 6px solid #FFB162;
+    padding-bottom: 2px;
+  }
+
+  /* ── Subtitle ── */
+  .subtitle {
+    font-size: 38px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 32px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Tech line ── */
+  .tech-line {
+    font-family: 'Azeret Mono', monospace;
+    font-size: 24px;
+    font-weight: 400;
+    color: #A0C9CB;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── Available badge ── */
+  .badge {
+    position: absolute;
+    bottom: 48px;
+    right: 72px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(16,185,129,0.12);
+    border: 1.5px solid rgba(16,185,129,0.35);
+    border-radius: 24px;
+    padding: 10px 22px;
+    font-size: 17px;
+    font-weight: 500;
+    color: #10b981;
+  }
+  .badge-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16,185,129,0.5);
+  }
+
+  /* ── Decorative corner accent ── */
+  .corner-accent {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle at 100% 0%, rgba(255,177,98,0.08) 0%, transparent 70%);
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="corner-accent"></div>
+  <div class="content">
+    <div class="logo">adrian<span style="color:#FFB162;font-weight:800">.</span>cv</div>
+    <div class="title">Adrian <span class="accent">Cajas</span></div>
+    <div class="subtitle">Data Engineer & AI</div>
+    <div class="tech-line">Informatica Cloud &middot; ETL &middot; LLMs &middot; Python</div>
+  </div>
+  <div class="badge">
+    <div class="badge-dot"></div>
+    Disponible
+  </div>
+</div>
+</body>
+</html>
+<!--
+  1. Abre este archivo en el navegador a 1200px de ancho minimo.
+  2. Captura SOLO el recuadro .card (1200x630).
+  3. Guardalo como og-image.png (PNG, <500KB).
+  4. Subelo al bucket en la raiz con el nombre og-image.png.
+-->

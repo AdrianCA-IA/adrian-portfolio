@@ -291,13 +291,13 @@
     {
       name: { es: 'IA & Agentes', en: 'AI & Agents' },
       color: '#A0C9CB', bg: 'rgba(160,201,203,0.12)',
-      kpi: { es: 'Implementación de flujos de trabajo con Multi-agentes para la delegación de tareas complejas y análisis de datos no estructurados.', en: 'Implementation of Multi-agent workflows for complex task delegation and unstructured data analysis.' },
+      kpi: { es: 'Agentes de IA aplicados a casos reales: gestor de llamadas con IA, agente de citas por WhatsApp sincronizado con Google Calendar y automatización interna con APIs de Claude y Gemini.', en: 'AI agents applied to real cases: AI call manager, WhatsApp booking agent synced with Google Calendar, and internal automation with Claude and Gemini APIs.' },
       children: [
-        { name: 'LLMs', lvl: 35, subs: ['Claude', 'Gemini', 'GPT', 'Prompting avanzado', 'Fine-tuning'] },
-        { name: 'APIs de IA', lvl: 40, subs: ['Claude API', 'Gemini API', 'REST Integration', 'Webhooks'] },
-        { name: 'Multi-agentes', lvl: 25, subs: ['Orquestación', 'Delegación de tareas', 'Agent SDK'] },
-        { name: 'Ollama', lvl: 30, subs: ['Modelos locales', 'Llama', 'Mistral', 'Embeddings'] },
-        { name: 'RAG', lvl: 25, subs: ['Vector DB', 'Chunking', 'Retrieval', 'Embeddings'] }
+        { name: 'LLMs', lvl: 60, subs: ['Claude', 'Gemini', 'GPT', 'Prompt Engineering', 'Context Engineering'] },
+        { name: 'APIs de IA', lvl: 65, subs: ['Claude API', 'Gemini API', 'REST Integration', 'Webhooks'] },
+        { name: 'Multi-agentes', lvl: 55, subs: ['Orquestación', 'Delegación de tareas', 'Agent SDK', 'MCP'] },
+        { name: 'Ollama', lvl: 40, subs: ['Modelos locales', 'Llama', 'Mistral', 'Embeddings'] },
+        { name: 'RAG', lvl: 40, subs: ['Vector DB', 'Chunking', 'Retrieval', 'Embeddings'] }
       ]
     },
     {
