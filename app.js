@@ -601,7 +601,7 @@
 
       /** Honeypot check — if filled, silently pretend success */
       if (honeypotField && honeypotField.value) {
-        if (statusDiv) { statusDiv.textContent = currentLang === 'es' ? 'Mensaje enviado.' : 'Message sent.'; statusDiv.style.color = '#10b981'; }
+        if (statusDiv) { statusDiv.textContent = currentLang === 'es' ? 'Mensaje enviado.' : 'Message sent.'; statusDiv.className = 'form-status success'; }
         cForm.reset();
         return;
       }
@@ -612,7 +612,7 @@
         btn.textContent = currentLang === 'es' ? 'Enviando...' : 'Sending...';
         btn.disabled = true;
       }
-      if (statusDiv) { statusDiv.textContent = ''; statusDiv.style.color = ''; }
+      if (statusDiv) { statusDiv.textContent = ''; statusDiv.className = 'form-status'; }
 
       /** AbortController with 10s timeout */
       var controller = new AbortController();
@@ -627,13 +627,13 @@
         });
         clearTimeout(timeout);
         if (res.ok) {
-          if (statusDiv) { statusDiv.textContent = currentLang === 'es' ? 'Mensaje enviado correctamente.' : 'Message sent successfully.'; statusDiv.style.color = '#10b981'; }
+          if (statusDiv) { statusDiv.textContent = currentLang === 'es' ? 'Mensaje enviado correctamente.' : 'Message sent successfully.'; statusDiv.className = 'form-status success'; }
           if (btn) { btn.style.background = '#10b981'; }
           cForm.reset();
           if (counter) counter.textContent = '0 / 2000';
           setTimeout(function () {
             if (btn) { btn.textContent = origText; btn.style.background = ''; btn.disabled = false; }
-            if (statusDiv) { statusDiv.textContent = ''; }
+            if (statusDiv) { statusDiv.textContent = ''; statusDiv.className = 'form-status'; }
           }, 3000);
         } else {
           throw new Error('fail');
@@ -643,11 +643,11 @@
         var msg = err.name === 'AbortError'
           ? (currentLang === 'es' ? 'Tiempo agotado. Inténtalo de nuevo.' : 'Request timed out. Please try again.')
           : (currentLang === 'es' ? 'Error al enviar. Inténtalo de nuevo.' : 'Send failed. Please try again.');
-        if (statusDiv) { statusDiv.textContent = msg; statusDiv.style.color = '#ef4444'; }
+        if (statusDiv) { statusDiv.textContent = msg; statusDiv.className = 'form-status error'; }
         if (btn) { btn.style.background = '#ef4444'; }
         setTimeout(function () {
           if (btn) { btn.textContent = origText; btn.style.background = ''; btn.disabled = false; }
-          if (statusDiv) { statusDiv.textContent = ''; }
+          if (statusDiv) { statusDiv.textContent = ''; statusDiv.className = 'form-status'; }
         }, 3000);
       }
     });
