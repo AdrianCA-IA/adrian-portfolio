@@ -204,6 +204,20 @@ adrian-portfolio/
 - Hay una **ventana de servicio de 24h**: fuera de ella, para escribir proactivamente hacen falta **plantillas aprobadas** por Meta.
 - La **verificación de negocio** de Meta puede tardar → **empezar pronto** (es el cuello de botella).
 
+### ¿Tengo que comprar una SIM? — Opciones de número
+- **Ahora no hace falta comprar nada.** Para desarrollar y demostrar el bot usamos el **número de test gratuito** que da Meta. Solo hace falta un número dedicado de verdad cuando quieras que **reclutadores reales** te escriban en producción (Fase 4).
+- **El bot corre en el servidor, no en el móvil.** No necesitas tener un teléfono encendido ni la SIM puesta para que funcione: el número solo sirve para **recibir el código de verificación una vez** (y alguna re-verificación ocasional).
+- **Requisitos del número:** poder recibir 1 SMS/llamada y **no estar registrado en ningún WhatsApp**.
+
+Cuando llegue la Fase 4, dos opciones:
+
+| Opción | Qué es | Pros | Contras |
+|--------|--------|------|---------|
+| **SIM prepago** (recomendada) | Una SIM barata (Lidl Móvil, Simyo, Orange prepago…) | Fiable (WhatsApp acepta números reales), barata, pago único | Tienes una SIM física; conviene guardarla activa por si hay re-verificación |
+| **Número virtual** | Número sin SIM física, de un proveedor VoIP/nube (recibes el SMS por su panel) | Sin SIM física; Twilio da número + integración WhatsApp juntos | Los gratis/desechables **no funcionan** (WhatsApp los bloquea); usar uno **de pago** (p. ej. Twilio), con coste mensual |
+
+**Recomendación:** número de test gratis en Fases 1-3; **SIM prepago** para producción (o número virtual de pago si no quieres SIM física).
+
 ### Checklist — 🧑 = lo hace Adrian (cuentas/verificación) · 🤝 = lo montamos juntos (código)
 - [ ] 🧑 Crear **cuenta de Meta Business** (business.facebook.com).
 - [ ] 🧑 Crear app en **Meta for Developers** (developers.facebook.com) y añadir el producto **WhatsApp**.
