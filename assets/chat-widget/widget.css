@@ -1,0 +1,143 @@
+/* ═══════════════════════════════════════════════════════════════
+   Widget de chat del asistente de IA — usa los tokens del portfolio.
+   ═══════════════════════════════════════════════════════════════ */
+.acw-root {
+  position: fixed; right: 20px; bottom: 20px; z-index: 9999;
+  font-family: var(--font, system-ui, sans-serif);
+}
+
+/* ── Botón lanzador ──────────────────────────────────────────── */
+.acw-launcher {
+  position: relative;
+  width: 58px; height: 58px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent, #FFB162), var(--accent-dim, #c8873a));
+  color: #0d1c2e;
+  box-shadow: 0 8px 28px rgba(255,177,98,.35), var(--shadow, 0 4px 24px rgba(0,0,0,.35));
+  display: grid; place-items: center;
+  transition: transform .25s var(--ease, cubic-bezier(.22,1,.36,1)), opacity .25s;
+}
+.acw-launcher:hover { transform: translateY(-2px) scale(1.05); }
+.acw-launcher svg { width: 26px; height: 26px; }
+.acw-badge {
+  position: absolute; top: -1px; right: -1px; width: 14px; height: 14px;
+  background: var(--emerald, #34d399); border-radius: 50%;
+  border: 2px solid var(--bg, #0d1c2e);
+}
+.acw-root.open .acw-launcher { transform: scale(.85); opacity: 0; pointer-events: none; }
+
+/* ── Panel ───────────────────────────────────────────────────── */
+.acw-panel {
+  position: absolute; right: 0; bottom: 0;
+  width: min(380px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 100px));
+  background: var(--bg-panel, #0f1f32);
+  border: 1px solid var(--border, rgba(160,201,203,.15));
+  border-radius: 18px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  display: flex; flex-direction: column;
+  opacity: 0; transform: translateY(16px) scale(.96); pointer-events: none;
+  transition: opacity .28s var(--ease-out, cubic-bezier(.16,1,.3,1)),
+              transform .28s var(--ease-out, cubic-bezier(.16,1,.3,1));
+}
+.acw-root.open .acw-panel { opacity: 1; transform: none; pointer-events: auto; }
+
+.acw-header {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  background: linear-gradient(180deg, var(--bg-surface, #122336), var(--bg-panel, #0f1f32));
+  border-bottom: 1px solid var(--border, rgba(160,201,203,.15));
+}
+.acw-avatar {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--accent, #FFB162);
+}
+.acw-h-info { flex: 1; min-width: 0; }
+.acw-h-name { color: var(--text, #fff); font-weight: 600; font-size: 14px; }
+.acw-h-status {
+  color: var(--text-3, #6e8499); font-size: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.acw-h-status::before {
+  content: ''; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--emerald, #34d399); box-shadow: 0 0 8px var(--emerald, #34d399);
+}
+.acw-close {
+  background: none; border: none; color: var(--text-3, #6e8499); cursor: pointer;
+  padding: 6px; border-radius: 8px; display: grid; place-items: center;
+}
+.acw-close:hover { color: var(--text, #fff); background: var(--bg-card, #162a40); }
+.acw-close svg { width: 18px; height: 18px; }
+
+/* ── Mensajes ────────────────────────────────────────────────── */
+.acw-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.acw-messages::-webkit-scrollbar { width: 8px; }
+.acw-messages::-webkit-scrollbar-thumb {
+  background: var(--border, rgba(160,201,203,.15)); border-radius: 8px;
+}
+.acw-msg {
+  max-width: 82%; padding: 10px 13px; border-radius: 14px;
+  font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;
+}
+.acw-msg.bot {
+  align-self: flex-start; background: var(--bg-card, #162a40);
+  color: var(--text-2, #c8d8e8); border-bottom-left-radius: 4px;
+}
+.acw-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--accent, #FFB162), var(--accent-dim, #c8873a));
+  color: #0d1c2e; font-weight: 500; border-bottom-right-radius: 4px;
+}
+.acw-msg a { color: var(--teal, #A0C9CB); }
+.acw-msg.user a { color: #0d1c2e; text-decoration: underline; }
+
+.acw-typing {
+  align-self: flex-start; background: var(--bg-card, #162a40);
+  padding: 12px 14px; border-radius: 14px; display: flex; gap: 5px;
+}
+.acw-typing span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--text-3, #6e8499); animation: acw-bounce 1.2s infinite;
+}
+.acw-typing span:nth-child(2) { animation-delay: .2s; }
+.acw-typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes acw-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ── Entrada ─────────────────────────────────────────────────── */
+.acw-input {
+  display: flex; gap: 8px; padding: 12px; align-items: flex-end;
+  border-top: 1px solid var(--border, rgba(160,201,203,.15));
+}
+.acw-input textarea {
+  flex: 1; resize: none; max-height: 96px; min-height: 40px;
+  background: var(--bg-card, #162a40); color: var(--text, #fff);
+  border: 1px solid var(--border, rgba(160,201,203,.15)); border-radius: 12px;
+  padding: 10px 12px; font-family: inherit; font-size: 14px; line-height: 1.4; outline: none;
+}
+.acw-input textarea:focus { border-color: var(--border-hover, rgba(255,177,98,.3)); }
+.acw-send {
+  width: 40px; height: 40px; flex: 0 0 auto; border: none; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg, var(--accent, #FFB162), var(--accent-dim, #c8873a));
+  color: #0d1c2e; display: grid; place-items: center; transition: opacity .2s;
+}
+.acw-send:disabled { opacity: .4; cursor: default; }
+.acw-send svg { width: 18px; height: 18px; }
+
+.acw-foot {
+  text-align: center; font-size: 10.5px; color: var(--text-3, #6e8499);
+  padding: 0 12px 10px;
+}
+
+@media (max-width: 480px) {
+  .acw-root { right: 14px; bottom: 14px; }
+  .acw-panel { width: calc(100vw - 24px); height: min(72vh, calc(100vh - 90px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acw-launcher, .acw-panel { transition: none; }
+  .acw-typing span { animation: none; }
+}

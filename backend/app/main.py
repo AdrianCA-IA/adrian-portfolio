@@ -54,6 +54,15 @@ def _client_id(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+@app.get("/")
+def root() -> dict:
+    return {
+        "service": "adrian-portfolio-ai-assistant",
+        "health": "/health",
+        "chat": "POST /chat",
+    }
+
+
 @app.get("/health")
 def health() -> dict:
     return {

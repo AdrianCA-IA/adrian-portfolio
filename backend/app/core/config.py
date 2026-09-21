@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Ruta absoluta a backend/.env → independiente del directorio de trabajo desde
+# el que se arranque uvicorn (backend/app/core/config.py → parents[2] = backend/).
+_ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+        env_file=str(_ENV_PATH), env_file_encoding="utf-8", extra="ignore"
     )
 
     # ── LLM ────────────────────────────────────────────────────────────
@@ -21,8 +26,10 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
 
     # ── Servidor ───────────────────────────────────────────────────────
-    # Orígenes permitidos por CORS (coma-separados). Bloquea el resto.
+    # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
+    # (5500 = frontend estático, 8000 = alternativo) y el dominio de producción.
     allowed_origins: str = (
+        "http://localhost:5500,http://127.0.0.1:5500,"
         "http://localhost:8000,http://127.0.0.1:8000,"
         "https://adrian-cajas-portfolio.web.app"
     )
