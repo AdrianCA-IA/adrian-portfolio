@@ -51,6 +51,17 @@ proveedor y modelo de LLM (con tabla de coste), claves, CORS y guardarraíles
 - CORS restringido a los dominios de `ALLOWED_ORIGINS`.
 - Rate limit por IP + recorte de entrada como guardarraíles de coste/abuso.
 
+## Canal Telegram (Fase 3)
+Agente demo en vivo que reutiliza el mismo grafo LangGraph. Requiere `TELEGRAM_BOT_TOKEN`
+en `.env` (créalo con @BotFather). Arranca con long-polling (no necesita URL pública):
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.channels.telegram_bot
+```
+- **Deep-link** para el handoff desde la web: `https://t.me/<TELEGRAM_BOT_USERNAME>?start=web`.
+- Envía **`/id`** al bot para obtener tu `chat_id` y ponerlo en `ADRIAN_TELEGRAM_CHAT_ID`
+  (así recibes un aviso cuando alguien prueba la demo).
+
 ## Despliegue (resumen)
 Contenedor a **GCP Cloud Run** (escala a cero). El frontend sigue en Firebase
 Hosting; este backend se despliega aparte. Detalle en el doc de arquitectura.

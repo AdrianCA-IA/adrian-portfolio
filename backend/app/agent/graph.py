@@ -75,13 +75,17 @@ def _wants_demo(user_text: str, history: list) -> bool:
 
 # ── Nodos ──────────────────────────────────────────────────────────────
 def classify(state: ChatState) -> dict:
-    intent = "handoff" if _wants_demo(state.get("user_text", ""), state.get("history", [])) else "chat"
-    return {"intent": intent}
+    # El handoff (ofrecer la demo) solo tiene sentido en el canal web; en Telegram/
+    # WhatsApp el usuario YA está dentro de la demo.
+    channel = state.get("channel", "web")
+    wants = channel == "web" and _wants_demo(state.get("user_text", ""), state.get("history", []))
+    return {"intent": "handoff" if wants else "chat"}
 
 
 def respond(state: ChatState) -> dict:
     lang = state.get("lang", "es")
-    system = build_system_prompt(lang, load_cv_context())
+    mode = "demo" if state.get("channel") in ("telegram", "whatsapp") else "web"
+    system = build_system_prompt(lang, load_cv_context(), mode)
 
     messages: list = [SystemMessage(content=system)]
     for turn in (state.get("history") or [])[-6:]:
