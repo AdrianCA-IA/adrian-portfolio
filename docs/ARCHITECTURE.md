@@ -44,6 +44,7 @@ Adrian está buscando trabajo (Data Engineer & AI, Madrid). El problema clásico
 | **D8** | **WhatsApp vía Business Platform / Cloud API oficial** (número dedicado) | La vía no oficial (Baileys, whatsapp-web.js) sobre el número personal tiene **riesgo de baneo**. Se hace bien desde el principio. |
 | **D9** | **Orden de construcción fácil→difícil**: Web → Telegram → WhatsApp | Cada canal reutiliza el core; WhatsApp es el de más fricción (verificación de negocio) y va al final. |
 | **D10** | **Handoff a humano** cuando hay lead caliente | LangGraph soporta interrupts/human-in-the-loop → aprendizaje + buena UX + línea de CV. |
+| **D11** | **El handoff es una demo en vivo del agente** (no solo un aviso): enlace/botón principal + opción de número | El engagement *es* la prueba de skill. Enlace = gratis/instantáneo/compliant; "escríbeme al número" = upgrade con plantilla WhatsApp. Telegram primero, luego WhatsApp. |
 
 ---
 
@@ -85,12 +86,20 @@ flowchart LR
     Core --> TOOLS
 ```
 
-### Flujo de un lead caliente
-1. Alguien pregunta algo específico (disponibilidad, encaje con una vacante, "¿cómo contacto?", tecnología concreta…).
-2. El **nodo de detección de intención** lo clasifica como *lead caliente*.
-3. El bot **ofrece** al usuario seguir por WhatsApp/Telegram o dejar contacto.
-4. Un **tool** registra el lead y **te avisa por Telegram al móvil**: *"👀 Alguien pregunta por X en el canal Web"*.
-5. Opcional: **handoff** — Adrian entra en la conversación (interrupt del grafo).
+### Flujo de la demo / handoff (el "engagement es la demo")
+La gracia: en vez de solo avisar a Adrian, el bot **ofrece probar en vivo un agente de
+WhatsApp/Telegram** — así el propio engagement demuestra que Adrian sabe construir agentes.
+1. El visitante muestra interés real (contratar, encaje con vacante, curiosidad por sus agentes).
+2. El bot **ofrece la demo**: *"Adrian también construye agentes de WhatsApp y Telegram, ¿quieres probar uno ahora?"*.
+3. Si acepta, el **nodo de handoff** le da:
+   - **Enlace/botón** *"Abrir en Telegram/WhatsApp"* → el agente le **saluda al instante** (opción principal).
+   - **Opción directa** *"¿prefieres que te escriba a tu número de WhatsApp?"* → si da el número, el agente le escribe con plantilla (upgrade). Si no, se queda con el enlace.
+4. El agente demo (mismo core) charla con guardarraíles: responde sobre el CV y hace brainstorm de *qué proyecto de IA podríamos montar*, sin comprometer a Adrian.
+5. **Aviso a Adrian** por Telegram: *"👀 Alguien está probando el agente demo (canal X)"*.
+
+> ⚠️ **Realidad anti-spam de las plataformas** (condiciona el diseño):
+> - **Telegram:** un bot NO puede escribir primero. Solo tras el `/start` del usuario → se usa un **deep-link** `t.me/<bot>?start=…` y el bot saluda al abrirlo.
+> - **WhatsApp:** el primer mensaje del negocio debe ser una **plantilla aprobada**. Alternativa sin plantilla: enlace `wa.me/<num>?text=…` (el visitante envía y ya se abre la ventana de 24h).
 
 ---
 
@@ -154,22 +163,25 @@ adrian-portfolio/
 - **Guardarraíles de coste** desde el día 1 (ver §7).
 - **Entregable:** chatbot en vivo en la web respondiendo sobre Adrian.
 
-### Fase 2 — Convertir a LangGraph "de verdad" (medio)
-- Migrar de cadena simple a **grafo LangGraph**: nodos, aristas condicionales, memoria.
-- **Nodo de detección de intención** de lead.
-- **Tool de alerta**: avisar a Adrian por Telegram cuando hay lead caliente.
-- Registro de leads en el store.
-- **Entregable:** el bot detecta interés y te avisa al móvil.
+### Fase 2 — LangGraph "de verdad" + oferta de demo (medio)
+- Migrar de cadena simple a **grafo LangGraph**: `classify → respond / handoff`.
+- **Nodo `classify`**: detecta si el visitante quiere probar la demo del agente.
+- **Nodo `handoff`**: devuelve enlace/botones de Telegram/WhatsApp + opción de número.
+- El widget web **renderiza los botones** de la oferta.
+- **Entregable:** el bot ofrece la demo y, al aceptar, muestra los accesos. ✅ (núcleo)
 
-### Fase 3 — Canal Telegram (medio)
-- Bot de Telegram (BotFather) conectado al mismo core vía webhook.
-- Reutiliza el grafo; solo cambia el adaptador.
-- **Entregable:** hablar con el mismo agente por Telegram.
+### Fase 3 — Canal Telegram (medio) — primero
+- Bot de Telegram (BotFather) con el **mismo core LangGraph** (long-polling en dev, webhook en prod).
+- **Deep-link** `t.me/<bot>?start=…` → el bot **saluda al instante** al abrirlo.
+- Agente demo: CV + brainstorm de proyecto, con guardarraíles.
+- **Aviso a Adrian** por Telegram cuando alguien prueba la demo.
+- **Entregable:** el visitante abre el enlace y habla con el agente demo por Telegram.
 
 ### Fase 4 — Canal WhatsApp Business (lo más difícil) — ver §8
+- MVP: enlace `wa.me/<num>?text=…` (sin plantilla) con el mismo core.
+- Upgrade: **plantilla aprobada** para "escribir al número del visitante" primero.
 - Onboarding de **WhatsApp Business Platform (Cloud API)** con número dedicado.
-- Webhook + plantillas + ventana de 24h.
-- **Entregable:** el agente también responde por WhatsApp, oficial y sin riesgo de baneo.
+- **Entregable:** demo del agente también por WhatsApp, oficial y sin riesgo de baneo.
 
 ### Fase 5 — Pulido, métricas y (opcional) Azure
 - Panel/analítica: nº de conversaciones, intención, conversión a lead.
@@ -271,6 +283,8 @@ Al terminar, Adrian podrá decir (con demo en vivo detrás):
 ## 12. Estado actual
 - ✅ Rama de trabajo creada y `master` intacto.
 - ✅ Documento de diseño (este archivo).
-- ⏭️ Siguiente: **Fase 1** — esqueleto del backend + agente básico + widget web.
+- ✅ **Fase 1 completa:** backend FastAPI + agente anclado al CV (bilingüe, anti-invención) + widget web, verificado end-to-end en el navegador. LLM actual: OpenAI `gpt-4o-mini` (intercambiable).
+- 🔨 **Fase 2 en curso:** grafo LangGraph `classify → respond / handoff` + botones de demo en el widget.
+- ⏭️ Siguiente: **Fase 3** — canal Telegram (deep-link + agente demo + aviso a Adrian). Requiere token de BotFather.
 
 > Decisiones abiertas / a revisar más adelante: proveedor LLM concreto por nodo, store definitivo de leads, si añadimos Azure en Fase 5.

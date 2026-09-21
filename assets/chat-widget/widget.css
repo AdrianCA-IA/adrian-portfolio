@@ -93,6 +93,19 @@
 .acw-msg a { color: var(--teal, #A0C9CB); }
 .acw-msg.user a { color: #0d1c2e; text-decoration: underline; }
 
+/* Botones de handoff (demo por Telegram/WhatsApp) */
+.acw-actions { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; }
+.acw-action-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 13px; border-radius: 12px;
+  font-size: 13px; font-weight: 600; text-decoration: none; color: #fff;
+  transition: transform .15s var(--ease, ease), box-shadow .15s;
+}
+.acw-action-btn svg { width: 16px; height: 16px; }
+.acw-action-btn.tg { background: linear-gradient(135deg, #2AABEE, #229ED9); }
+.acw-action-btn.wa { background: linear-gradient(135deg, #25D366, #128C7E); }
+.acw-action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.3); }
+
 .acw-typing {
   align-self: flex-start; background: var(--bg-card, #162a40);
   padding: 12px 14px; border-radius: 14px; display: flex; gap: 5px;

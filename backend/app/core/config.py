@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     anthropic_api_key: str | None = None
     openai_api_key: str | None = None
 
+    # ── Canales de demo (handoff) ──────────────────────────────────────
+    # Se rellenan al crear el bot; mientras estén vacíos, el widget no muestra
+    # ese botón. telegram_bot_token / adrian_telegram_chat_id son secretos.
+    telegram_bot_username: str = ""      # sin @, p. ej. "AdrianCV_bot"
+    telegram_bot_token: str = ""         # de @BotFather (secreto)
+    adrian_telegram_chat_id: str = ""    # chat de Adrian para recibir avisos
+    whatsapp_number: str = ""            # E.164 sin '+', p. ej. "34600111222"
+
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
     # (5500 = frontend estático, 8000 = alternativo) y el dominio de producción.

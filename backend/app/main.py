@@ -44,6 +44,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    handoff: dict | None = None
 
 
 def _client_id(request: Request) -> str:
@@ -91,7 +92,7 @@ def chat(req: ChatRequest, request: Request):
     history = [t.model_dump() for t in req.history]
 
     try:
-        reply = run_agent(text, history, lang)
+        result = run_agent(text, history, lang)
     except Exception:  # no filtramos detalles internos al cliente
         logger.exception("Error generando respuesta del agente")
         msg = (
@@ -103,4 +104,4 @@ def chat(req: ChatRequest, request: Request):
         )
         return JSONResponse(status_code=500, content={"reply": msg})
 
-    return ChatResponse(reply=reply)
+    return ChatResponse(reply=result["reply"], handoff=result.get("handoff"))

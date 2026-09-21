@@ -126,6 +126,39 @@
     return el;
   }
 
+  function actionIcon(kind) {
+    if (kind === 'tg') {
+      return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.9 4.3 2.9 11.6c-.9.35-.88 1.62.03 1.92l4.7 1.47 1.8 5.6c.22.66 1.02.86 1.5.36l2.6-2.5 4.7 3.46c.57.42 1.38.12 1.55-.58l3.2-15.6c.2-.94-.72-1.72-1.58-1.33zM9.7 14.1l-.3 3.5-1.3-4.1 9.2-5.7-7.6 6.3z"/></svg>';
+    }
+    return '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.1-.2 0-.4.1-.5l.4-.5c.1-.2.1-.3 0-.5l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3A3 3 0 0 0 6 9.4a5.3 5.3 0 0 0 1.1 2.8 11.9 11.9 0 0 0 4.6 4c1.6.6 2.3.6 3 .5.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.6-.5z"/></svg>';
+  }
+
+  // Renderiza los botones de handoff (demo por Telegram/WhatsApp).
+  function renderHandoff(h) {
+    if (!h) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'acw-actions';
+    var en = getLang() === 'en';
+    if (h.telegram_url) {
+      var a = document.createElement('a');
+      a.className = 'acw-action-btn tg';
+      a.href = h.telegram_url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.innerHTML = actionIcon('tg') + (en ? 'Open in Telegram' : 'Abrir en Telegram');
+      wrap.appendChild(a);
+    }
+    if (h.whatsapp_url) {
+      var b = document.createElement('a');
+      b.className = 'acw-action-btn wa';
+      b.href = h.whatsapp_url; b.target = '_blank'; b.rel = 'noopener noreferrer';
+      b.innerHTML = actionIcon('wa') + (en ? 'Open in WhatsApp' : 'Abrir en WhatsApp');
+      wrap.appendChild(b);
+    }
+    if (wrap.children.length) {
+      msgBox.appendChild(wrap);
+      msgBox.scrollTop = msgBox.scrollHeight;
+    }
+  }
+
   function renderAll() {
     msgBox.innerHTML = '';
     if (messages.length === 0) {
@@ -185,6 +218,7 @@
         var reply = (res.d && res.d.reply) ? res.d.reply : I18N[lang].error;
         messages.push({ role: 'assistant', content: reply });
         addBubble('assistant', reply);
+        if (res.d && res.d.handoff) renderHandoff(res.d.handoff);
         persist();
       })
       .catch(function () {
