@@ -202,32 +202,69 @@
 
     busy = true; sendBtn.disabled = true;
     var typing = showTyping();
+    var history = messages.slice(-7, -1);   // hasta 6 turnos previos (sin el actual)
 
-    fetch(API_BASE + '/chat', {
+    var botBubble = null;
+    var acc = '';
+
+    function finish() {
+      if (typing) { typing.remove(); typing = null; }
+      if (acc) {
+        messages.push({ role: 'assistant', content: acc });
+        if (botBubble) botBubble.innerHTML = linkify(escapeHtml(acc)); // enlaces al final
+        persist();
+      }
+      busy = false; sendBtn.disabled = false; textarea.focus();
+    }
+
+    function onEvent(d) {
+      if (d.type === 'token') {
+        if (typing) { typing.remove(); typing = null; }
+        if (!botBubble) botBubble = addBubble('assistant', '');
+        acc += d.token;
+        botBubble.textContent = acc;          // texto plano mientras streamea (seguro)
+        msgBox.scrollTop = msgBox.scrollHeight;
+      } else if (d.type === 'full') {           // handoff: mensaje completo + botones
+        if (typing) { typing.remove(); typing = null; }
+        acc = d.reply || '';
+        botBubble = addBubble('assistant', acc);
+        if (d.handoff) renderHandoff(d.handoff);
+      } else if (d.type === 'error') {
+        if (typing) { typing.remove(); typing = null; }
+        acc = '';
+        addBubble('assistant', d.reply || I18N[lang].error);
+      }
+    }
+
+    fetch(API_BASE + '/chat/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: text,
-        history: messages.slice(-7, -1),   // hasta 6 turnos previos (sin el actual)
-        lang: lang
-      })
-    })
-      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-      .then(function (res) {
-        typing.remove();
-        var reply = (res.d && res.d.reply) ? res.d.reply : I18N[lang].error;
-        messages.push({ role: 'assistant', content: reply });
-        addBubble('assistant', reply);
-        if (res.d && res.d.handoff) renderHandoff(res.d.handoff);
-        persist();
-      })
-      .catch(function () {
-        typing.remove();
-        addBubble('assistant', I18N[lang].offline);
-      })
-      .finally(function () {
-        busy = false; sendBtn.disabled = false; textarea.focus();
-      });
+      body: JSON.stringify({ message: text, history: history, lang: lang })
+    }).then(function (resp) {
+      if (!resp.ok || !resp.body) throw new Error('no stream');
+      var reader = resp.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      function pump() {
+        return reader.read().then(function (res) {
+          if (res.done) { finish(); return; }
+          buffer += decoder.decode(res.value, { stream: true });
+          var parts = buffer.split('\n\n');
+          buffer = parts.pop();
+          for (var i = 0; i < parts.length; i++) {
+            var line = parts[i].trim();
+            if (line.indexOf('data:') !== 0) continue;
+            try { onEvent(JSON.parse(line.slice(5).trim())); } catch (e) {}
+          }
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function () {
+      if (typing) { typing.remove(); typing = null; }
+      if (!acc) addBubble('assistant', I18N[lang].offline);
+      busy = false; sendBtn.disabled = false;
+    });
   }
 
   // Sincroniza el idioma del widget con el toggle ES/EN del sitio.

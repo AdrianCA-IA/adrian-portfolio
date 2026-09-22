@@ -7,7 +7,9 @@ Flujo:  START → classify → (chat) respond → END
 - `respond`   respuesta normal anclada al CV (puede ofrecer la demo).
 - `handoff`   devuelve el mensaje + enlaces/botones de Telegram/WhatsApp.
 
-El mismo grafo se reutilizará en los canales web, Telegram y WhatsApp.
+El mismo grafo se reutiliza en los canales web, Telegram y WhatsApp. Las piezas
+(build de mensajes, detección de handoff, payload de handoff, LLM) se exponen como
+funciones para poder reutilizarlas también en el endpoint de streaming.
 """
 from __future__ import annotations
 
@@ -36,9 +38,10 @@ class ChatState(TypedDict, total=False):
 
 # ── LLM (perezoso, compartido) ─────────────────────────────────────────
 _llm = None
+_HISTORY_TURNS = 6
 
 
-def _get_llm():
+def get_llm():
     global _llm
     if _llm is None:
         _llm = build_llm()
@@ -54,12 +57,10 @@ def _wants_demo(user_text: str, history: list) -> bool:
     t = (user_text or "").lower().strip()
     if not t:
         return False
-    # 1) Petición explícita: menciona probar/mostrar + canal/agente.
     if re.search(_DEMO, t) and re.search(_AFFIRM, t):
         return True
     if re.search(r"(prob(ar|arlo|émoslo)|mu[eé]stra|ens[eé]ña|ver).{0,20}(agente|whats?app|telegram|bot|demo)", t):
         return True
-    # 2) Afirmación corta ("sí", "vale", "dale") justo tras una oferta del asistente.
     if re.fullmatch(_AFFIRM + r"[.!\s]*", t):
         last_bot = ""
         for turn in reversed(history or []):
@@ -73,22 +74,16 @@ def _wants_demo(user_text: str, history: list) -> bool:
     return False
 
 
-# ── Nodos ──────────────────────────────────────────────────────────────
-def classify(state: ChatState) -> dict:
-    # El handoff (ofrecer la demo) solo tiene sentido en el canal web; en Telegram/
-    # WhatsApp el usuario YA está dentro de la demo.
-    channel = state.get("channel", "web")
-    wants = channel == "web" and _wants_demo(state.get("user_text", ""), state.get("history", []))
-    return {"intent": "handoff" if wants else "chat"}
+def wants_demo_handoff(user_text: str, history: list, channel: str) -> bool:
+    """El handoff solo tiene sentido en web (en Telegram/WhatsApp ya están dentro)."""
+    return channel == "web" and _wants_demo(user_text, history)
 
 
-def respond(state: ChatState) -> dict:
-    lang = state.get("lang", "es")
-    mode = "demo" if state.get("channel") in ("telegram", "whatsapp") else "web"
-    system = build_system_prompt(lang, load_cv_context(), mode)
-
-    messages: list = [SystemMessage(content=system)]
-    for turn in (state.get("history") or [])[-6:]:
+def build_agent_messages(user_text: str, history: list, lang: str, channel: str) -> list:
+    """Construye la lista de mensajes (system + historial + turno actual)."""
+    mode = "demo" if channel in ("telegram", "whatsapp") else "web"
+    messages: list = [SystemMessage(content=build_system_prompt(lang, load_cv_context(), mode))]
+    for turn in (history or [])[-_HISTORY_TURNS:]:
         role = turn.get("role")
         content = (turn.get("content") or "").strip()
         if not content:
@@ -97,17 +92,13 @@ def respond(state: ChatState) -> dict:
             messages.append(HumanMessage(content=content))
         elif role == "assistant":
             messages.append(AIMessage(content=content))
-    messages.append(HumanMessage(content=state.get("user_text", "")))
-
-    resp = _get_llm().invoke(messages)
-    text = resp.content if isinstance(resp.content, str) else str(resp.content)
-    return {"reply": text, "handoff": None}
+    messages.append(HumanMessage(content=user_text))
+    return messages
 
 
-def handoff(state: ChatState) -> dict:
+def demo_handoff_payload(lang: str) -> dict:
+    """Mensaje + enlaces del handoff (web). Devuelve {"reply", "handoff"}."""
     s = get_settings()
-    lang = state.get("lang", "es")
-
     tg_url = f"https://t.me/{s.telegram_bot_username}?start=web" if s.telegram_bot_username else ""
     wa_text = "Hola, quiero probar el agente demo de Adrian" if lang == "es" \
         else "Hi, I'd like to try Adrian's demo agent"
@@ -132,13 +123,32 @@ def handoff(state: ChatState) -> dict:
     if tg_url or wa_url:
         handoff_data = {"telegram_url": tg_url, "whatsapp_url": wa_url}
     else:
-        # Aún no hay bot configurado: avisamos con naturalidad.
         note = ("\n\n_(El agente demo se está terminando de montar — en breve verás aquí el botón.)_"
                 if lang == "es" else
                 "\n\n_(The demo agent is being finished — the button will appear here shortly.)_")
         reply += note
-
     return {"reply": reply, "handoff": handoff_data}
+
+
+# ── Nodos ──────────────────────────────────────────────────────────────
+def classify(state: ChatState) -> dict:
+    channel = state.get("channel", "web")
+    wants = wants_demo_handoff(state.get("user_text", ""), state.get("history", []), channel)
+    return {"intent": "handoff" if wants else "chat"}
+
+
+def respond(state: ChatState) -> dict:
+    messages = build_agent_messages(
+        state.get("user_text", ""), state.get("history", []),
+        state.get("lang", "es"), state.get("channel", "web"),
+    )
+    resp = get_llm().invoke(messages)
+    text = resp.content if isinstance(resp.content, str) else str(resp.content)
+    return {"reply": text, "handoff": None}
+
+
+def handoff(state: ChatState) -> dict:
+    return demo_handoff_payload(state.get("lang", "es"))
 
 
 def _route(state: ChatState) -> str:
