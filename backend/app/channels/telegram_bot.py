@@ -31,6 +31,11 @@ from ..core.ratelimit import check_rate_limit
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("telegram-demo")
 
+# httpx registra la URL completa de cada request a INFO, y esa URL INCLUYE el token
+# del bot (…/bot<TOKEN>/getUpdates). Lo subimos a WARNING para NO filtrar el token.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 # Estado en memoria (suficiente para un único proceso en dev).
 _history: dict[int, list] = defaultdict(list)   # chat_id -> [{role, content}, ...]
 _notified: set[int] = set()                     # chats ya avisados a Adrian
