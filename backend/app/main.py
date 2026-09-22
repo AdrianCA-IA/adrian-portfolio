@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from .agent.agent import run_agent
+from .channels.whatsapp import router as whatsapp_router
 from .core.config import get_settings
 from .core.ratelimit import check_rate_limit
 
@@ -29,6 +30,9 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+# Canal WhatsApp (webhook GET/POST en /webhook/whatsapp).
+app.include_router(whatsapp_router)
 
 
 class ChatTurn(BaseModel):

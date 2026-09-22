@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     telegram_bot_token: str = ""         # de @BotFather (secreto)
     adrian_telegram_chat_id: str = ""    # chat de Adrian para recibir avisos
     whatsapp_number: str = ""            # E.164 sin '+', p. ej. "34600111222"
+    # WhatsApp Cloud API (Fase 4). El token y el verify token son secretos.
+    whatsapp_phone_number_id: str = ""   # "Phone Number ID" de Meta
+    whatsapp_token: str = ""             # token (System User o temporal)
+    whatsapp_verify_token: str = ""      # token que fijamos para verificar el webhook
+    whatsapp_api_version: str = "v21.0"  # versión de la Graph API
 
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
