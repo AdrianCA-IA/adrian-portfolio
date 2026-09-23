@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     whatsapp_token: str = ""             # token (System User o temporal)
     whatsapp_verify_token: str = ""      # token que fijamos para verificar el webhook
     whatsapp_api_version: str = "v21.0"  # versión de la Graph API
+    # WhatsApp PERSONAL de Adrian para CONTACTO directo (NO la demo). El agente lo
+    # comparte solo cuando hay interés real. Va en .env (no en el repo público).
+    contact_whatsapp: str = ""           # p. ej. "+34600111222"
 
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev

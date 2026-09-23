@@ -79,10 +79,26 @@ def wants_demo_handoff(user_text: str, history: list, channel: str) -> bool:
     return channel == "web" and _wants_demo(user_text, history)
 
 
+def _contact_note(lang: str) -> str:
+    """Nota de contacto DIRECTO (WhatsApp personal), solo si está configurado."""
+    contact = get_settings().contact_whatsapp
+    if not contact:
+        return ""
+    if lang == "en":
+        return (f"\n\nDIRECT CONTACT (not the demo): when someone shows real interest in contacting "
+                f"or hiring Adrian, ALWAYS share his personal WhatsApp ({contact}) TOGETHER WITH his "
+                "email and LinkedIn — not just one of them. This WhatsApp is his personal contact, "
+                "NOT the demo number.")
+    return (f"\n\nCONTACTO DIRECTO (no la demo): cuando alguien muestre interés real de contactar o "
+            f"contratar a Adrian, comparte SIEMPRE su WhatsApp personal ({contact}) JUNTO CON su email "
+            "y LinkedIn — no solo uno. Este WhatsApp es su contacto personal, NO el de la demo.")
+
+
 def build_agent_messages(user_text: str, history: list, lang: str, channel: str) -> list:
     """Construye la lista de mensajes (system + historial + turno actual)."""
     mode = "demo" if channel in ("telegram", "whatsapp") else "web"
-    messages: list = [SystemMessage(content=build_system_prompt(lang, load_cv_context(), mode))]
+    system_text = build_system_prompt(lang, load_cv_context(), mode) + _contact_note(lang)
+    messages: list = [SystemMessage(content=system_text)]
     for turn in (history or [])[-_HISTORY_TURNS:]:
         role = turn.get("role")
         content = (turn.get("content") or "").strip()
