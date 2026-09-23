@@ -49,8 +49,10 @@ def get_llm():
 
 
 # ── Detección de intención (heurística; barata y sin latencia extra) ───
-_AFFIRM = r"(s[ií]+|vale|dale+|claro|ok(?:ay)?|venga|por supuesto|quiero|me gustar[ií]a|va|genial|perfecto)"
-_DEMO = r"(prob(ar|arlo|émoslo|amos)|demo|agente|whats?app|telegram|bot)"
+# Bilingüe (ES + EN).
+_AFFIRM = (r"(s[ií]+|yes|yeah|yep|sure|vale|dale+|claro|ok(?:ay)?|venga|por supuesto|of\s*course|"
+           r"quiero|i\s*want|i'?d\s*like|me gustar[ií]a|let'?s|va|genial|perfecto|great)")
+_DEMO = r"(prob(ar|arlo|émoslo|amos)|try|test|show|demo|agente|agent|whats?app|telegram|bot)"
 
 
 def _wants_demo(user_text: str, history: list) -> bool:
@@ -59,7 +61,7 @@ def _wants_demo(user_text: str, history: list) -> bool:
         return False
     if re.search(_DEMO, t) and re.search(_AFFIRM, t):
         return True
-    if re.search(r"(prob(ar|arlo|émoslo)|mu[eé]stra|ens[eé]ña|ver).{0,20}(agente|whats?app|telegram|bot|demo)", t):
+    if re.search(r"(prob(ar|arlo|émoslo)|mu[eé]stra|ens[eé]ña|ver|try|test|show|see).{0,20}(agente|agent|whats?app|telegram|bot|demo)", t):
         return True
     if re.fullmatch(_AFFIRM + r"[.!\s]*", t):
         last_bot = ""
@@ -67,8 +69,9 @@ def _wants_demo(user_text: str, history: list) -> bool:
             if turn.get("role") == "assistant":
                 last_bot = (turn.get("content") or "").lower()
                 break
-        if ("whatsapp" in last_bot or "telegram" in last_bot) and (
-            "prob" in last_bot or "agente" in last_bot or "demo" in last_bot
+        if ("whatsapp" in last_bot or "telegram" in last_bot or "demo" in last_bot) and (
+            "prob" in last_bot or "agente" in last_bot or "agent" in last_bot
+            or "demo" in last_bot or "try" in last_bot
         ):
             return True
     return False
