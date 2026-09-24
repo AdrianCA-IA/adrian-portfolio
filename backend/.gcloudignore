@@ -1,9 +1,16 @@
-# No subir a Cloud Build (el contenedor solo necesita requirements.txt + app/).
+# No subir al build de Cloud Run (equivalente a .gitignore para gcloud)
 .venv/
 venv/
+env/
 __pycache__/
 *.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Secretos y locales — NUNCA al contenedor
 .env
 .env.*
 !.env.example
-.pytest_cache/
+
+# Notas/artefactos locales
+*.log
