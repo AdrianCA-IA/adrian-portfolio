@@ -272,5 +272,11 @@
     attributes: true, attributeFilter: ['data-lang']
   });
 
+  // Abrir el chat desde cualquier [data-acw-open] (p. ej. el botón de la sección "Chatbots").
+  document.querySelectorAll('[data-acw-open]').forEach(function (el) {
+    el.addEventListener('click', function (e) { e.preventDefault(); openPanel(); });
+  });
+  window.acwOpen = openPanel;
+
   applyStrings();
 })();
