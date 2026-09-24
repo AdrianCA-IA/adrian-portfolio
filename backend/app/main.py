@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from .agent.agent import run_agent
 from .agent.graph import build_agent_messages, demo_handoff_payload, get_llm, wants_demo_handoff
+from .channels.telegram_webhook import router as telegram_router
 from .channels.whatsapp import router as whatsapp_router
 from .core.config import get_settings
 from .core.ratelimit import check_rate_limit
@@ -33,8 +34,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Canal WhatsApp (webhook GET/POST en /webhook/whatsapp).
-app.include_router(whatsapp_router)
+# Canales por webhook (para producción en Cloud Run).
+app.include_router(whatsapp_router)      # /webhook/whatsapp
+app.include_router(telegram_router)      # /webhook/telegram
 
 
 class ChatTurn(BaseModel):

@@ -1,0 +1,9 @@
+# No subir a Cloud Build (el contenedor solo necesita requirements.txt + app/).
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.pytest_cache/
