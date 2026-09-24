@@ -11,7 +11,7 @@
   var IS_LOCAL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
   var API_BASE = IS_LOCAL
     ? 'http://' + location.hostname + ':8000'   // mismo host que la página (evita líos IPv4/IPv6)
-    : 'https://TODO-URL-CLOUD-RUN';             // TODO(deploy): URL real del backend
+    : 'https://portfolio-backend-mt6n4iqyxa-no.a.run.app'; // backend en Cloud Run (Madrid)
 
   var I18N = {
     es: {
