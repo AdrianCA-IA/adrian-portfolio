@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # ese botón. telegram_bot_token / adrian_telegram_chat_id son secretos.
     telegram_bot_username: str = ""      # sin @, p. ej. "AdrianCV_bot"
     telegram_bot_token: str = ""         # de @BotFather (secreto)
+    telegram_webhook_secret: str = ""    # secreto para validar el webhook (producción)
     adrian_telegram_chat_id: str = ""    # chat de Adrian para recibir avisos
     whatsapp_number: str = ""            # E.164 sin '+', p. ej. "34600111222"
     # WhatsApp Cloud API (Fase 4). El token y el verify token son secretos.
