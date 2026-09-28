@@ -14,3 +14,10 @@ langgraph>=0.2
 
 # Canal Telegram
 python-telegram-bot>=21
+
+# Canal Voz (Twilio Voice: TwiML + validación de firma)
+twilio>=9.0
+python-multipart>=0.0.9   # FastAPI lee el form-urlencoded de Twilio
+
+# HTTP async (canal WhatsApp)
+httpx>=0.27

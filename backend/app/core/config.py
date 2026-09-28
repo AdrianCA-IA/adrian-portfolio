@@ -42,6 +42,16 @@ class Settings(BaseSettings):
     # comparte solo cuando hay interés real. Va en .env (no en el repo público).
     contact_whatsapp: str = ""           # p. ej. "+34600111222"
 
+    # ── Canal Voz (Twilio Voice, Fase 5) ───────────────────────────────
+    # Cualquiera llama al número de Twilio → webhook → agente (channel="voice").
+    twilio_auth_token: str = ""          # para validar la firma X-Twilio-Signature (secreto)
+    twilio_number: str = ""              # el número de Twilio, informativo (E.164)
+    voice_language: str = "es-ES"        # idioma de reconocimiento de voz (ASR)
+    voice_tts_voice: str = "Polly.Lucia" # voz de síntesis (Amazon Polly, es-ES)
+    voice_max_seconds: int = 300         # duración máxima de la llamada (5 min)
+    voice_max_turns: int = 20            # backstop de turnos por llamada
+    twilio_validate: bool = True         # validar la firma de Twilio (fail-closed)
+
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
     # (5500 = frontend estático, 8000 = alternativo) y el dominio de producción.
