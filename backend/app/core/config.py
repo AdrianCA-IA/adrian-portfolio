@@ -46,8 +46,11 @@ class Settings(BaseSettings):
     # Cualquiera llama al número de Twilio → webhook → agente (channel="voice").
     twilio_auth_token: str = ""          # para validar la firma X-Twilio-Signature (secreto)
     twilio_number: str = ""              # el número de Twilio, informativo (E.164)
-    voice_language: str = "es-ES"        # idioma de reconocimiento de voz (ASR)
-    voice_tts_voice: str = "Polly.Lucia" # voz de síntesis (Amazon Polly, es-ES)
+    # Bilingüe: el llamante elige idioma al inicio (menú). ES por defecto.
+    voice_language: str = "es-ES"        # ASR español
+    voice_tts_voice: str = "Polly.Lucia" # TTS español (Amazon Polly)
+    voice_language_en: str = "en-US"     # ASR inglés
+    voice_tts_voice_en: str = "Polly.Joanna"  # TTS inglés (Amazon Polly)
     voice_max_seconds: int = 300         # duración máxima de la llamada (5 min)
     voice_max_turns: int = 20            # backstop de turnos por llamada
     twilio_validate: bool = True         # validar la firma de Twilio (fail-closed)
