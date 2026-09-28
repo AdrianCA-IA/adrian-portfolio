@@ -1,8 +1,9 @@
 """Prompt de sistema del asistente, con guardarraíles anti-alucinación.
 
 `mode`:
-  - "web"  → asistente del portfolio; puede OFRECER probar la demo del agente.
-  - "demo" → es el AGENTE DEMO en vivo (Telegram/WhatsApp); además propone ideas de proyecto.
+  - "web"   → asistente del portfolio; puede OFRECER probar la demo del agente.
+  - "demo"  → es el AGENTE DEMO en vivo (Telegram/WhatsApp); además propone ideas de proyecto.
+  - "voice" → habla por TELÉFONO (Twilio Voice): respuestas muy cortas y habladas.
 """
 from __future__ import annotations
 
@@ -76,11 +77,29 @@ _MODE_DEMO_EN = (
     "  realistic AI project ideas Adrian could build for them, WITHOUT committing Adrian to\n"
     "  timelines, prices or promises."
 )
+_MODE_VOICE_ES = (
+    "- Estás hablando por TELÉFONO (voz), no por chat, y TÚ MISMO eres la prueba de que Adrian\n"
+    "  construye agentes de voz. Respuestas MUY breves: 1-3 frases, lenguaje natural y hablado.\n"
+    "  NADA de listas, markdown, URLs, asteriscos ni emojis (se leen en voz alta y suenan mal).\n"
+    "- Termina casi siempre con una pregunta corta para que la persona siga hablando.\n"
+    "- Si preguntan cómo contactar: di su email despacio ('adriancajasalmachi, arroba, gmail,\n"
+    "  punto com') e invita a ver su web o LinkedIn; no deletrees enlaces largos.\n"
+    "- Si no entiendes bien lo que dicen, pide con naturalidad que lo repitan."
+)
+_MODE_VOICE_EN = (
+    "- You are on a PHONE CALL (voice), not chat, and you yourself are proof that Adrian builds\n"
+    "  voice agents. Keep answers VERY short: 1-3 sentences, natural spoken language.\n"
+    "  NO lists, markdown, URLs, asterisks or emojis (they get read aloud and sound bad).\n"
+    "- Almost always end with a short question so the caller keeps talking.\n"
+    "- If they ask how to reach him: say his email slowly ('adriancajasalmachi at gmail dot\n"
+    "  com') and invite them to his website or LinkedIn; don't spell out long links.\n"
+    "- If you don't catch what they said, naturally ask them to repeat it."
+)
 
 
 def build_system_prompt(lang: str, cv_context: str, mode: str = "web") -> str:
     if lang == "en":
-        note = _MODE_DEMO_EN if mode == "demo" else _MODE_WEB_EN
+        note = {"demo": _MODE_DEMO_EN, "voice": _MODE_VOICE_EN}.get(mode, _MODE_WEB_EN)
         return _RULES_EN.format(mode_note=note, cv_context=cv_context)
-    note = _MODE_DEMO_ES if mode == "demo" else _MODE_WEB_ES
+    note = {"demo": _MODE_DEMO_ES, "voice": _MODE_VOICE_ES}.get(mode, _MODE_WEB_ES)
     return _RULES_ES.format(mode_note=note, cv_context=cv_context)

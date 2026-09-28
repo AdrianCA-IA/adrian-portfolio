@@ -30,7 +30,7 @@ class ChatState(TypedDict, total=False):
     user_text: str
     history: list          # [{"role": "user"|"assistant", "content": str}, ...]
     lang: str              # "es" | "en"
-    channel: str           # "web" | "telegram" | "whatsapp"
+    channel: str           # "web" | "telegram" | "whatsapp" | "voice"
     intent: str            # "chat" | "handoff"
     reply: str
     handoff: Optional[dict]  # {"telegram_url": str, "whatsapp_url": str} | None
@@ -99,7 +99,12 @@ def _contact_note(lang: str) -> str:
 
 def build_agent_messages(user_text: str, history: list, lang: str, channel: str) -> list:
     """Construye la lista de mensajes (system + historial + turno actual)."""
-    mode = "demo" if channel in ("telegram", "whatsapp") else "web"
+    if channel == "voice":
+        mode = "voice"
+    elif channel in ("telegram", "whatsapp"):
+        mode = "demo"
+    else:
+        mode = "web"
     system_text = build_system_prompt(lang, load_cv_context(), mode) + _contact_note(lang)
     messages: list = [SystemMessage(content=system_text)]
     for turn in (history or [])[-_HISTORY_TURNS:]:
