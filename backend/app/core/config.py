@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     twilio_number: str = ""              # el número de Twilio, informativo (E.164)
     # Bilingüe: el llamante elige idioma al inicio (menú). ES por defecto.
     voice_language: str = "es-ES"        # ASR español
-    voice_tts_voice: str = "Polly.Lucia" # TTS español (Amazon Polly)
+    voice_tts_voice: str = "Polly.Lucia-Neural"   # TTS español neural (más humano)
     voice_language_en: str = "en-US"     # ASR inglés
-    voice_tts_voice_en: str = "Polly.Joanna"  # TTS inglés (Amazon Polly)
+    voice_tts_voice_en: str = "Polly.Joanna-Neural"  # TTS inglés neural (más humano)
     voice_max_seconds: int = 300         # duración máxima de la llamada (5 min)
     voice_max_turns: int = 20            # backstop de turnos por llamada
     twilio_validate: bool = True         # validar la firma de Twilio (fail-closed)
