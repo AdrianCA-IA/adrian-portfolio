@@ -59,8 +59,8 @@ class Settings(BaseSettings):
     # Si True, /webhook/voice conecta el audio por WebSocket al modelo Realtime
     # (voz humana, detecta idioma solo, fluido). Si False → menú + Gather (fallback).
     voice_realtime: bool = True
-    realtime_model: str = "gpt-4o-realtime-preview"  # modelo de voz en tiempo real
-    realtime_voice: str = "alloy"        # voz del modelo (alloy, shimmer, echo, verse…)
+    realtime_model: str = "gpt-realtime"  # modelo de voz en tiempo real (API GA)
+    realtime_voice: str = "alloy"        # voz del modelo (alloy, marin, cedar, shimmer…)
 
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev

@@ -268,16 +268,18 @@ def _voice_instructions() -> str:
         "- Responde SOLO con la información del CONTEXTO. No inventes empresas, fechas, cargos ni "
         "tecnologías. Si algo no está, dilo con naturalidad y ofrece su email "
         "(adriancajasalmachi arroba gmail punto com).\n"
-        "- Termina a menudo con una pregunta corta para mantener la conversación.\n\n"
+        "- Termina a menudo con una pregunta corta para mantener la conversación.\n"
+        "- AL EMPEZAR LA LLAMADA saluda tú primero, breve y cálido, en español (preséntate como el "
+        "asistente de voz de Adrián y pregunta en qué puedes ayudar).\n\n"
         f"CONTEXTO (CV de Adrián, fuente de verdad):\n{cv}"
     )
 
 
 async def _oai_connect():
-    """Abre el WebSocket con la API Realtime de OpenAI (compat entre versiones de `websockets`)."""
+    """Abre el WebSocket con la API Realtime GA de OpenAI (compat entre versiones de `websockets`)."""
     s = get_settings()
     url = f"wss://api.openai.com/v1/realtime?model={s.realtime_model}"
-    headers = {"Authorization": f"Bearer {s.openai_api_key}", "OpenAI-Beta": "realtime=v1"}
+    headers = {"Authorization": f"Bearer {s.openai_api_key}"}  # GA: sin header beta
     try:
         return await websockets.connect(url, additional_headers=headers, max_size=None)
     except TypeError:  # websockets < 14 usa extra_headers
@@ -309,26 +311,25 @@ async def media_stream(ws: WebSocket):
                 pass
 
     try:
-        # Sesión: audio μ-law (igual que Twilio, sin transcodificar), VAD del servidor.
+        # Sesión (API GA): audio μ-law (audio/pcmu, igual que Twilio, sin transcodificar),
+        # VAD del servidor (gestiona turnos e interrupciones automáticamente).
         await oai.send(json.dumps({
             "type": "session.update",
             "session": {
+                "type": "realtime",
                 "instructions": _voice_instructions(),
-                "voice": s.realtime_voice,
-                "input_audio_format": "g711_ulaw",
-                "output_audio_format": "g711_ulaw",
-                "turn_detection": {"type": "server_vad", "silence_duration_ms": 500},
-                "modalities": ["audio", "text"],
-                "temperature": 0.7,
+                "output_modalities": ["audio"],
+                "audio": {
+                    "input": {
+                        "format": {"type": "audio/pcmu"},
+                        "turn_detection": {"type": "server_vad", "silence_duration_ms": 500},
+                    },
+                    "output": {"format": {"type": "audio/pcmu"}, "voice": s.realtime_voice},
+                },
             },
         }))
-        # Saludo inicial (en español; cambiará solo si le hablan en inglés).
-        await oai.send(json.dumps({
-            "type": "response.create",
-            "response": {"instructions": (
-                "Saluda en español, breve y cálido: preséntate como el asistente de voz de "
-                "Adrián Cajas y pregunta en qué puedes ayudar.")},
-        }))
+        # Saludo inicial: pedimos la primera respuesta (saluda según las instrucciones).
+        await oai.send(json.dumps({"type": "response.create"}))
 
         async def twilio_to_oai():
             nonlocal stream_sid
@@ -354,18 +355,15 @@ async def media_stream(ws: WebSocket):
             async for raw in oai:
                 evt = json.loads(raw)
                 t = evt.get("type", "")
-                if t == "response.audio.delta" and stream_sid and evt.get("delta"):
+                if t == "response.output_audio.delta" and stream_sid and evt.get("delta"):
                     await ws.send_text(json.dumps({
                         "event": "media", "streamSid": stream_sid,
                         "media": {"payload": evt["delta"]},
                     }))
                 elif t == "input_audio_buffer.speech_started" and stream_sid:
-                    # Barge-in: el usuario habla → vacía la cola de Twilio y corta la respuesta.
+                    # Barge-in: el usuario habla → vacía la cola de audio de Twilio
+                    # (el servidor GA ya interrumpe su propia respuesta).
                     await ws.send_text(json.dumps({"event": "clear", "streamSid": stream_sid}))
-                    try:
-                        await oai.send(json.dumps({"type": "response.cancel"}))
-                    except Exception:
-                        pass
                 elif t == "error":
                     log.error("OpenAI Realtime error: %s", str(evt)[:300])
 
