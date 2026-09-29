@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     voice_max_seconds: int = 300         # duración máxima de la llamada (5 min)
     voice_max_turns: int = 20            # backstop de turnos por llamada
     twilio_validate: bool = True         # validar la firma de Twilio (fail-closed)
+    twilio_account_sid: str = ""         # para validar el media stream (no secreto)
+    # ── Voz en TIEMPO REAL (OpenAI Realtime API, voz↔voz) ──────────────
+    # Si True, /webhook/voice conecta el audio por WebSocket al modelo Realtime
+    # (voz humana, detecta idioma solo, fluido). Si False → menú + Gather (fallback).
+    voice_realtime: bool = True
+    realtime_model: str = "gpt-4o-realtime-preview"  # modelo de voz en tiempo real
+    realtime_voice: str = "alloy"        # voz del modelo (alloy, shimmer, echo, verse…)
 
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
