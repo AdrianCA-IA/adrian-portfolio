@@ -108,10 +108,61 @@
     return safe;
   }
 
+  // Markdown mínimo sobre texto YA escapado: `code`, **negrita**, *cursiva*.
+  // Solo inserta etiquetas fijas sin atributos, así que no abre vías de XSS.
+  function inlineMd(safe) {
+    var codes = [];
+    safe = safe.replace(/`([^`]+)`/g, function (_, c) {
+      codes.push(c);
+      return '\u0000' + (codes.length - 1) + '\u0000';
+    });
+    safe = safe.replace(/\*\*(?=\S)([^*]+?)\*\*/g, '<strong>$1</strong>');
+    safe = safe.replace(/(^|[^*\w])\*(?=\S)([^*]+?)\*(?!\*)/g, '$1<em>$2</em>');
+    safe = linkify(safe);
+    return safe.replace(/\u0000(\d+)\u0000/g, function (_, i) { return '<code>' + codes[+i] + '</code>'; });
+  }
+
+  // Bloques: listas numeradas / con viñetas y saltos de línea.
+  function renderMd(text) {
+    var lines = escapeHtml(String(text).replace(/\u0000/g, '')).split(/\r?\n/);
+    var out = [], para = [], list = null, li = null;
+    function flushPara() { if (para.length) { out.push('<p>' + para.join('<br>') + '</p>'); para = []; } }
+    function closeLi() { if (li !== null) { out.push('<li>' + li + '</li>'); li = null; } }
+    function closeList() { closeLi(); if (list) { out.push('</' + list + '>'); list = null; } }
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var ol = /^\s*(\d{1,4})[.)]\s+(.*)$/.exec(line);
+      var ul = !ol && /^\s*[-*•]\s+(.*)$/.exec(line);
+      if (ol || ul) {
+        var type = ol ? 'ol' : 'ul';
+        flushPara();
+        if (list !== type) {
+          closeList();
+          list = type;
+          out.push(ol && ol[1] !== '1' ? '<ol start="' + (+ol[1]) + '">' : '<' + type + '>');
+        }
+        closeLi();
+        li = inlineMd(ol ? ol[2] : ul[1]);
+      } else if (!line.trim()) {
+        flushPara();
+        // Una línea en blanco entre ítems no rompe la lista.
+        var next = lines.slice(i + 1).find(function (l) { return l.trim(); });
+        if (list && !(next && (list === 'ol' ? /^\s*\d{1,4}[.)]\s+/ : /^\s*[-*•]\s+/).test(next))) closeList();
+      } else if (li !== null && /^\s+/.test(line)) {
+        li += '<br>' + inlineMd(line.trim());   // continuación indentada del ítem
+      } else {
+        closeList();
+        para.push(inlineMd(line));
+      }
+    }
+    flushPara(); closeList();
+    return out.join('');
+  }
+
   function addBubble(role, text) {
     var el = document.createElement('div');
-    el.className = 'acw-msg ' + (role === 'user' ? 'user' : 'bot');
-    el.innerHTML = linkify(escapeHtml(text));
+    el.className = 'acw-msg ' + (role === 'user' ? 'user' : 'bot md');
+    el.innerHTML = role === 'user' ? linkify(escapeHtml(text)) : renderMd(text);
     msgBox.appendChild(el);
     msgBox.scrollTop = msgBox.scrollHeight;
     return el;
@@ -211,7 +262,7 @@
       if (typing) { typing.remove(); typing = null; }
       if (acc) {
         messages.push({ role: 'assistant', content: acc });
-        if (botBubble) botBubble.innerHTML = linkify(escapeHtml(acc)); // enlaces al final
+        if (botBubble) botBubble.innerHTML = renderMd(acc);
         persist();
       }
       busy = false; sendBtn.disabled = false; textarea.focus();
@@ -222,7 +273,7 @@
         if (typing) { typing.remove(); typing = null; }
         if (!botBubble) botBubble = addBubble('assistant', '');
         acc += d.token;
-        botBubble.textContent = acc;          // texto plano mientras streamea (seguro)
+        botBubble.innerHTML = renderMd(acc);  // re-render en cada chunk (escapa antes)
         msgBox.scrollTop = msgBox.scrollHeight;
       } else if (d.type === 'full') {           // handoff: mensaje completo + botones
         if (typing) { typing.remove(); typing = null; }
