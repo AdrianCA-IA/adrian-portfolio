@@ -92,6 +92,18 @@
 }
 .acw-msg a { color: var(--teal, #A0C9CB); }
 .acw-msg.user a { color: #0d1c2e; text-decoration: underline; }
+/* Respuestas del bot con markdown renderizado */
+.acw-msg.md { white-space: normal; }
+.acw-msg.md p { margin: 0; }
+.acw-msg.md p + p, .acw-msg.md p + ol, .acw-msg.md p + ul,
+.acw-msg.md ol + p, .acw-msg.md ul + p { margin-top: 8px; }
+.acw-msg.md ol, .acw-msg.md ul { margin: 0; padding-left: 20px; }
+.acw-msg.md li + li { margin-top: 4px; }
+.acw-msg.md strong { color: var(--text, #e8eef5); font-weight: 600; }
+.acw-msg.md code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
+  background: rgba(160,201,203,.12); padding: 1px 5px; border-radius: 4px;
+}
 
 /* Botones de handoff (demo por Telegram/WhatsApp) */
 .acw-actions { display: flex; flex-wrap: wrap; gap: 8px; align-self: flex-start; }
