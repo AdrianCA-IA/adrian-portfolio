@@ -62,6 +62,11 @@ class Settings(BaseSettings):
     realtime_model: str = "gpt-realtime"  # modelo de voz en tiempo real (API GA)
     realtime_voice: str = "alloy"        # voz del modelo (alloy, marin, cedar, shimmer…)
 
+    # ── Automatizaciones (n8n) ─────────────────────────────────────────
+    # El agente envía eventos (p. ej. "lead") a este webhook de n8n. Vacío = desactivado.
+    n8n_webhook_url: str = ""            # p. ej. "http://localhost:5678/webhook/lead"
+    n8n_webhook_secret: str = ""         # cabecera X-N8N-Secret que n8n valida (secreto)
+
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev
     # (5500 = frontend estático, 8000 = alternativo) y el dominio de producción.

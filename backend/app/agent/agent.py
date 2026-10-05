@@ -6,6 +6,7 @@ WhatsApp). Devuelve el texto de respuesta y, si procede, la info de handoff
 """
 from __future__ import annotations
 
+from ..core.events import maybe_emit_lead
 from .graph import get_graph
 
 
@@ -18,4 +19,5 @@ def run_agent(message: str, history: list[dict], lang: str = "es", channel: str 
         "channel": channel,
     }
     result = get_graph().invoke(state)
+    maybe_emit_lead(message, channel, lang, result.get("reply", ""))
     return {"reply": result.get("reply", ""), "handoff": result.get("handoff")}
