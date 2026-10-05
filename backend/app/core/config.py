@@ -48,12 +48,19 @@ class Settings(BaseSettings):
     twilio_number: str = ""              # el número de Twilio, informativo (E.164)
     # Bilingüe: el llamante elige idioma al inicio (menú). ES por defecto.
     voice_language: str = "es-ES"        # ASR español
-    voice_tts_voice: str = "Polly.Lucia" # TTS español (Amazon Polly)
+    voice_tts_voice: str = "Polly.Lucia-Neural"   # TTS español neural (más humano)
     voice_language_en: str = "en-US"     # ASR inglés
-    voice_tts_voice_en: str = "Polly.Joanna"  # TTS inglés (Amazon Polly)
+    voice_tts_voice_en: str = "Polly.Joanna-Neural"  # TTS inglés neural (más humano)
     voice_max_seconds: int = 300         # duración máxima de la llamada (5 min)
     voice_max_turns: int = 20            # backstop de turnos por llamada
     twilio_validate: bool = True         # validar la firma de Twilio (fail-closed)
+    twilio_account_sid: str = ""         # para validar el media stream (no secreto)
+    # ── Voz en TIEMPO REAL (OpenAI Realtime API, voz↔voz) ──────────────
+    # Si True, /webhook/voice conecta el audio por WebSocket al modelo Realtime
+    # (voz humana, detecta idioma solo, fluido). Si False → menú + Gather (fallback).
+    voice_realtime: bool = True
+    realtime_model: str = "gpt-realtime"  # modelo de voz en tiempo real (API GA)
+    realtime_voice: str = "alloy"        # voz del modelo (alloy, marin, cedar, shimmer…)
 
     # ── Servidor ───────────────────────────────────────────────────────
     # Orígenes permitidos por CORS (coma-separados). Incluye puertos de dev

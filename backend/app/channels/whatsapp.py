@@ -21,6 +21,7 @@ from fastapi import APIRouter, Query, Request, Response
 
 from ..agent.agent import run_agent
 from ..core.config import get_settings
+from ..core.legal import CHAT_NOTICE
 from ..core.ratelimit import check_rate_limit
 
 log = logging.getLogger("whatsapp-demo")
@@ -77,6 +78,7 @@ async def _handle_message(sender: str, text: str) -> None:
         await _send(sender, "Vas muy rápido 🙏 Espera un momentito y seguimos.")
         return
 
+    first_contact = sender not in _history
     hist = _history[sender]
     result = run_agent(text, list(hist), lang="es", channel="whatsapp")
     reply = result.get("reply", "")
@@ -85,6 +87,8 @@ async def _handle_message(sender: str, text: str) -> None:
     hist.append({"role": "assistant", "content": reply})
     del hist[:-_HISTORY_TURNS]
 
+    if first_contact:   # aviso de privacidad / IA en el primer mensaje (RGPD art. 13, RIA art. 50)
+        await _send(sender, CHAT_NOTICE["es"])
     await _send(sender, reply)
 
 

@@ -17,17 +17,22 @@ límites son configurables (VOICE_* / TWILIO_* en config.py).
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 import time
 
-from fastapi import APIRouter, Request
+import websockets
+from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from twilio.request_validator import RequestValidator
-from twilio.twiml.voice_response import Gather, VoiceResponse
+from twilio.twiml.voice_response import Connect, Gather, VoiceResponse
 
 from ..agent.agent import run_agent
 from ..core.config import get_settings
+from ..core.legal import VOICE_NOTICE
 from ..core.ratelimit import check_rate_limit
+from ..data import load_cv_context
 
 log = logging.getLogger("voice-demo")
 router = APIRouter()
@@ -39,9 +44,9 @@ _HISTORY_TURNS = 10
 
 # Locuciones fijas por idioma. El resto lo genera el agente.
 GREET = {
-    "es": ("Hola, soy el asistente de voz de Adrián Cajas. Puedes preguntarme por su "
+    "es": ("Hola, soy el asistente de voz de Adrián Cajas. " + VOICE_NOTICE["es"] + " Puedes preguntarme por su "
            "experiencia, sus proyectos o su stack. ¿Qué te gustaría saber?"),
-    "en": ("Hi, I'm Adrián Cajas' voice assistant. You can ask me about his experience, "
+    "en": ("Hi, I'm Adrián Cajas' voice assistant. " + VOICE_NOTICE["en"] + " You can ask me about his experience, "
            "his projects or his tech stack. What would you like to know?"),
 }
 BYE = {
@@ -139,6 +144,15 @@ async def incoming_call(request: Request):
         vr.hangup()
         return _twiml(vr)
 
+    # ── Modo TIEMPO REAL: puentea el audio con la API Realtime de OpenAI ─
+    if s.voice_realtime:
+        host = request.headers.get("host") or (request.url.hostname or "")
+        connect = Connect()
+        connect.stream(url=f"wss://{host}/webhook/voice/stream")
+        vr.append(connect)
+        return _twiml(vr)
+
+    # ── Modo GATHER (fallback): menú de idioma + turnos ─────────────────
     started = int(time.time())
     if call_sid:
         _calls[call_sid] = {"history": [], "turns": 0, "noinput": 0, "started": started}
@@ -238,3 +252,143 @@ async def handle_turn(request: Request, started: int = 0, lang: str = "es"):
     g.say(reply, voice=_tts(lang), language=_asr(lang))
     vr.append(g)
     return _twiml(vr)
+
+
+# ── Voz en TIEMPO REAL (OpenAI Realtime API, voz↔voz) ──────────────────
+def _voice_instructions() -> str:
+    """Instrucciones del modelo Realtime: hablado, bilingüe (auto-detecta), anclado al CV."""
+    cv = load_cv_context()
+    return (
+        "Eres el asistente de voz de Adrián Cajas (Data & AI Engineer, Madrid), hablando por "
+        "TELÉFONO con un recruiter o visitante. Tú mismo eres la prueba de que Adrián construye "
+        "agentes de voz.\n"
+        "- DETECTA EL IDIOMA de quien llama (español o inglés) y respóndele SIEMPRE en ese mismo "
+        "idioma; si cambia de idioma, cámbialo tú también. NUNCA preguntes qué idioma prefiere.\n"
+        "- Habla de forma natural, cálida y BREVE (1-3 frases), como en una conversación real. "
+        "Nada de listas ni de leer enlaces o URLs.\n"
+        "- Responde SOLO con la información del CONTEXTO. No inventes empresas, fechas, cargos ni "
+        "tecnologías. Si algo no está, dilo con naturalidad y ofrece su email "
+        "(adriancajasalmachi arroba gmail punto com).\n"
+        "- Termina a menudo con una pregunta corta para mantener la conversación.\n"
+        "- AL EMPEZAR LA LLAMADA saluda tú primero, breve y cálido, en español (preséntate como el "
+        "asistente de voz de Adrián, di SIEMPRE que eres una inteligencia artificial y que no se "
+        "graba la llamada, y pregunta en qué puedes ayudar).\n\n"
+        f"CONTEXTO (CV de Adrián, fuente de verdad):\n{cv}"
+    )
+
+
+async def _oai_connect():
+    """Abre el WebSocket con la API Realtime GA de OpenAI (compat entre versiones de `websockets`)."""
+    s = get_settings()
+    url = f"wss://api.openai.com/v1/realtime?model={s.realtime_model}"
+    headers = {"Authorization": f"Bearer {s.openai_api_key}"}  # GA: sin header beta
+    try:
+        return await websockets.connect(url, additional_headers=headers, max_size=None)
+    except TypeError:  # websockets < 14 usa extra_headers
+        return await websockets.connect(url, extra_headers=headers, max_size=None)
+
+
+@router.websocket("/webhook/voice/stream")
+async def media_stream(ws: WebSocket):
+    """Puente bidireccional Twilio Media Streams ↔ OpenAI Realtime (voz↔voz)."""
+    await ws.accept()
+    s = get_settings()
+    stream_sid: str | None = None
+
+    try:
+        oai = await _oai_connect()
+    except Exception:
+        log.exception("No se pudo conectar con la API Realtime de OpenAI")
+        try:
+            await ws.close()
+        except Exception:
+            pass
+        return
+
+    async def close_all():
+        for c in (oai, ws):
+            try:
+                await c.close()
+            except Exception:
+                pass
+
+    try:
+        # Sesión (API GA): audio μ-law (audio/pcmu, igual que Twilio, sin transcodificar),
+        # VAD del servidor (gestiona turnos e interrupciones automáticamente).
+        await oai.send(json.dumps({
+            "type": "session.update",
+            "session": {
+                "type": "realtime",
+                "instructions": _voice_instructions(),
+                "output_modalities": ["audio"],
+                "audio": {
+                    "input": {
+                        "format": {"type": "audio/pcmu"},
+                        "turn_detection": {"type": "server_vad", "silence_duration_ms": 500},
+                    },
+                    "output": {"format": {"type": "audio/pcmu"}, "voice": s.realtime_voice},
+                },
+            },
+        }))
+        # Saludo inicial: pedimos la primera respuesta (saluda según las instrucciones).
+        await oai.send(json.dumps({"type": "response.create"}))
+
+        async def twilio_to_oai():
+            nonlocal stream_sid
+            while True:
+                data = json.loads(await ws.receive_text())
+                ev = data.get("event")
+                if ev == "start":
+                    stream_sid = data["start"]["streamSid"]
+                    acc = data["start"].get("accountSid", "")
+                    if s.twilio_account_sid and acc and acc != s.twilio_account_sid:
+                        log.warning("Media stream con accountSid inesperado; cerrando.")
+                        return
+                elif ev == "media":
+                    await oai.send(json.dumps({
+                        "type": "input_audio_buffer.append",
+                        "audio": data["media"]["payload"],
+                    }))
+                elif ev == "stop":
+                    return
+
+        async def oai_to_twilio():
+            nonlocal stream_sid
+            async for raw in oai:
+                evt = json.loads(raw)
+                t = evt.get("type", "")
+                if t == "response.output_audio.delta" and stream_sid and evt.get("delta"):
+                    await ws.send_text(json.dumps({
+                        "event": "media", "streamSid": stream_sid,
+                        "media": {"payload": evt["delta"]},
+                    }))
+                elif t == "input_audio_buffer.speech_started" and stream_sid:
+                    # Barge-in: el usuario habla → vacía la cola de audio de Twilio
+                    # (el servidor GA ya interrumpe su propia respuesta).
+                    await ws.send_text(json.dumps({"event": "clear", "streamSid": stream_sid}))
+                elif t == "error":
+                    log.error("OpenAI Realtime error: %s", str(evt)[:300])
+
+        async def time_guard():
+            await asyncio.sleep(s.voice_max_seconds)
+            try:
+                await oai.send(json.dumps({
+                    "type": "response.create",
+                    "response": {"instructions": (
+                        "Despídete brevemente en el idioma de la conversación: se acaba el tiempo "
+                        "de la demo, agradece la llamada e invita a escribir por WhatsApp o la web.")},
+                }))
+                await asyncio.sleep(5)
+            finally:
+                await close_all()
+
+        tasks = [asyncio.create_task(c) for c in (twilio_to_oai(), oai_to_twilio(), time_guard())]
+        _, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        for p in pending:
+            p.cancel()
+    except WebSocketDisconnect:
+        pass
+    except Exception:
+        log.exception("Error en el puente de voz en tiempo real")
+    finally:
+        await close_all()

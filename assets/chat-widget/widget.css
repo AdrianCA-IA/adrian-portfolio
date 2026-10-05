@@ -154,3 +154,4 @@
   .acw-launcher, .acw-panel { transition: none; }
   .acw-typing span { animation: none; }
 }
+.acw-foot a { color: inherit; text-decoration: underline; }

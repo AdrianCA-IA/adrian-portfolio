@@ -19,7 +19,8 @@
       status: 'Responde al instante',
       placeholder: 'Escribe tu pregunta…',
       greeting: '¡Hola! 👋 Soy el asistente de Adrian. Pregúntame por su experiencia, proyectos o stack — o si encaja con una vacante.',
-      disclaimer: 'IA · puede cometer errores. Verifica lo importante.',
+      disclaimer: 'IA · puede cometer errores. Tus mensajes solo se usan para responderte.',
+      privacy: 'Privacidad',
       error: 'Ups, no he podido responder ahora mismo. Inténtalo de nuevo en unos segundos.',
       offline: 'No puedo conectar con el servidor ahora mismo. Inténtalo más tarde.',
       open: 'Abrir chat con el asistente',
@@ -30,7 +31,8 @@
       status: 'Replies instantly',
       placeholder: 'Type your question…',
       greeting: "Hi! 👋 I'm Adrian's assistant. Ask me about his experience, projects or stack — or whether he fits a role.",
-      disclaimer: 'AI · may make mistakes. Verify anything important.',
+      disclaimer: 'AI · may make mistakes. Your messages are only used to reply to you.',
+      privacy: 'Privacy',
       error: "Oops, I couldn't answer just now. Please try again in a few seconds.",
       offline: "Can't reach the server right now. Please try again later.",
       open: 'Open chat with the assistant',
@@ -93,7 +95,11 @@
     root.querySelector('.acw-h-status').textContent = t.status;
     textarea.setAttribute('placeholder', t.placeholder);
     textarea.setAttribute('aria-label', t.placeholder);
-    root.querySelector('.acw-foot').textContent = t.disclaimer;
+    var foot = root.querySelector('.acw-foot');
+    foot.textContent = t.disclaimer + ' ';
+    var pl = document.createElement('a');
+    pl.href = 'privacidad.html'; pl.textContent = t.privacy;
+    foot.appendChild(pl);
   }
 
   function escapeHtml(s) {

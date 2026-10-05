@@ -8,9 +8,9 @@
 - **Nombre:** Adrian Cajas (Adrian Cajas Almachi).
 - **Título profesional:** Data Engineer & AI (Ingeniero de Datos e IA).
 - **Ubicación:** Madrid, España.
-- **Resumen:** Ingeniero de Datos e IA con +8 años construyendo pipelines de datos masivos, especializado en Informatica Cloud (IICS) y procesos ETL. Hoy construye agentes de IA que automatizan procesos reales: llamadas, citas y flujos de negocio.
+- **Resumen:** Ingeniero de Datos e IA con 7 años construyendo pipelines de datos masivos, especializado en Informatica Cloud (IICS) y procesos ETL. Hoy construye agentes de IA que automatizan procesos reales: llamadas, citas y flujos de negocio.
 - **Estado:** Disponible para nuevos retos / abierto a nuevas oportunidades.
-- **Métricas destacadas:** 7+ años en Data · 6 empresas · 15+ proyectos ETL · Certificado en IA.
+- **Métricas destacadas:** 7 años en Data · 6 empresas · 15+ proyectos ETL · Certificado en IA.
 
 ## Contacto
 - **Email:** adriancajasalmachi@gmail.com

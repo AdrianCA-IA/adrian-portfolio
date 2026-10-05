@@ -507,3 +507,12 @@ noscript{display:block;padding:48px 24px;text-align:center;background:var(--bg-s
 .footer-social-link{color:var(--text-3);transition:color .2s}
 .footer-social-link:hover{color:var(--accent)}
 .footer-social-link svg{width:20px;height:20px}
+
+/* ══════════ LEGAL (RGPD) ══════════ */
+.cinfo{font-size:.75rem;line-height:1.5;color:var(--text-3);margin:0}
+.cinfo a,.cprivacy a,.footer-legal a{color:var(--teal)}
+.cprivacy{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--text-2);cursor:pointer}
+.cprivacy input{accent-color:var(--accent);width:16px;height:16px}
+.footer-legal{font-size:.78rem;margin-top:6px;color:var(--text-3)}
+.footer-legal a{text-decoration:none}
+.footer-legal a:hover{text-decoration:underline}
