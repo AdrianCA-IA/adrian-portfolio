@@ -1,0 +1,60 @@
+{
+  "name": "Lead del agente → Sheets + Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "a1",
+      "name": "Webhook (evento del agente)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "lead"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "mode": "url", "value": "PEGA_AQUI_LA_URL_DE_TU_GOOGLE_SHEET" },
+        "sheetName": { "__rl": true, "mode": "name", "value": "Leads" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "fecha": "={{ $json.body.ts }}",
+            "canal": "={{ $json.body.channel }}",
+            "motivo": "={{ $json.body.reason }}",
+            "idioma": "={{ $json.body.lang }}",
+            "mensaje": "={{ $json.body.message }}",
+            "respuesta_agente": "={{ $json.body.reply }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "a2",
+      "name": "Google Sheets (CRM)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "chatId": "PEGA_AQUI_TU_CHAT_ID",
+        "text": "=🔔 Nuevo lead ({{ $('Webhook (evento del agente)').item.json.body.channel }} · {{ $('Webhook (evento del agente)').item.json.body.reason }})\n\n💬 {{ $('Webhook (evento del agente)').item.json.body.message }}",
+        "additionalFields": {}
+      },
+      "id": "a3",
+      "name": "Telegram (aviso al móvil)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [520, 0]
+    }
+  ],
+  "connections": {
+    "Webhook (evento del agente)": { "main": [[{ "node": "Google Sheets (CRM)", "type": "main", "index": 0 }]] },
+    "Google Sheets (CRM)": { "main": [[{ "node": "Telegram (aviso al móvil)", "type": "main", "index": 0 }]] }
+  },
+  "settings": {}
+}

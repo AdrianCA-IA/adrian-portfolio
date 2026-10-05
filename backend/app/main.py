@@ -20,6 +20,7 @@ from .channels.telegram_webhook import router as telegram_router
 from .channels.voice_twilio import router as voice_router
 from .channels.whatsapp import router as whatsapp_router
 from .core.config import get_settings
+from .core.events import maybe_emit_lead
 from .core.ratelimit import check_rate_limit
 
 logger = logging.getLogger("portfolio-assistant")
@@ -146,11 +147,14 @@ async def chat_stream(req: ChatRequest, request: Request):
                 yield _sse({"type": "full", "reply": payload["reply"], "handoff": payload["handoff"]})
                 return
             messages = build_agent_messages(text, history, lang, "web")
+            reply = ""
             async for chunk in get_llm().astream(messages):
                 token = chunk.content if isinstance(chunk.content, str) else ""
                 if token:
+                    reply += token
                     yield _sse({"type": "token", "token": token})
             yield _sse({"type": "done"})
+            maybe_emit_lead(text, "web", lang, reply)
         except Exception:
             logger.exception("Error en el streaming del agente")
             msg = (
