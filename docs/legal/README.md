@@ -23,10 +23,13 @@
 | Aviso de IA y privacidad en Telegram, WhatsApp y voz | `backend/app/core/legal.py` (texto único) |
 | Sin conexiones a terceros al cargar la web | Fuentes en `assets/fonts/`, D3 en `assets/vendor/` (antes Google Fonts / cdnjs) |
 
+### Decisión sobre los datos del titular (5/10/2026)
+
+La web es un **portfolio personal sin actividad comercial**, así que el aviso legal muestra solo nombre, email
+y ciudad (no DNI ni dirección personal). La política de privacidad no los necesita: el RGPD pide identidad y contacto.
+
 ### Antes de fusionar con `master`
 
-- [ ] Rellenar `[COMPLETAR: NIF]` y `[COMPLETAR: domicilio]` en `aviso-legal.html` y `privacidad.html`.
-      Comprobación: `grep -rn "COMPLETAR" *.html` no debe devolver nada.
 - [ ] Desplegar el backend (`cloudrun.ps1`) para que los avisos de Telegram, WhatsApp y voz lleguen a producción.
 
 ## Cómo funciona el banner (y cómo añadir analítica)
@@ -51,6 +54,7 @@
 | Base de datos (Postgres, etc.) | Actualizar plazos, proveedor y el registro de actividades de abajo |
 | Newsletter o comunicaciones comerciales | Casilla de consentimiento **separada y desmarcada** (LSSI art. 21) |
 | Nuevo proveedor (LLM, CRM…) | Añadirlo a "Proveedores" y comprobar su garantía de transferencia (dataprivacyframework.gov) |
+| **Alta como autónomo / vender servicios** (p. ej. bots para pymes) | Añadir al aviso legal el **NIF** y un **domicilio** (puede ser de domiciliación u oficina virtual, no hace falta tu casa) y quitar la frase "sin actividad comercial" (LSSI art. 10) |
 | Leads de n8n en producción | Ya cubierto ("Avisos de interés", 12 meses). **Borrar las filas de Sheets con más de 12 meses.** |
 
 ## Registro de actividades de tratamiento (RAT, uso interno)
