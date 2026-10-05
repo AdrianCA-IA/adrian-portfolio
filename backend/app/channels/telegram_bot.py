@@ -26,6 +26,7 @@ from telegram.ext import (
 
 from ..agent.agent import run_agent
 from ..core.config import get_settings
+from ..core.legal import CHAT_NOTICE
 from ..core.ratelimit import check_rate_limit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -85,6 +86,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     lang = _lang(update)
     await _notify_adrian(update, context)
     await update.message.reply_text(_GREETING[lang], parse_mode="Markdown")
+    await update.message.reply_text(CHAT_NOTICE[lang])
 
 
 async def cmd_id(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

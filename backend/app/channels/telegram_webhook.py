@@ -19,6 +19,7 @@ from fastapi import APIRouter, Header, Request, Response
 
 from ..agent.agent import run_agent
 from ..core.config import get_settings
+from ..core.legal import CHAT_NOTICE
 from ..core.ratelimit import check_rate_limit
 
 log = logging.getLogger("telegram-webhook")
@@ -101,6 +102,7 @@ async def telegram_webhook(
     if text.startswith("/start"):
         await _notify_adrian(chat_id, frm)
         await _tg("sendMessage", {"chat_id": chat_id, "text": _GREETING[lang], "parse_mode": "Markdown"})
+        await _tg("sendMessage", {"chat_id": chat_id, "text": CHAT_NOTICE[lang]})
         return {"ok": True}
 
     allowed, _ = check_rate_limit(f"tg:{chat_id}")

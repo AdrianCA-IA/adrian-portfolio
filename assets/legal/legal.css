@@ -1,0 +1,18 @@
+/* Páginas legales — misma paleta que el portfolio */
+body{margin:0}
+.legal{max-width:780px;margin:0 auto;padding:32px 16px 64px;position:relative;z-index:1}
+.legal-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap}
+.legal-top a{color:var(--accent);text-decoration:none;font-family:var(--mono);font-size:.85rem}
+.legal-lang{background:transparent;color:var(--text);border:1px solid var(--border-hover);border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit;font-size:.8rem}
+.legal h1{font-size:clamp(1.6rem,4vw,2.2rem);margin:0 0 6px}
+.legal .updated{color:var(--text-3);font-family:var(--mono);font-size:.78rem;margin:0 0 28px}
+.legal h2{font-size:1.15rem;color:var(--accent);margin:32px 0 10px}
+.legal p,.legal li{color:var(--text-2)}
+.legal ul{padding-left:20px}
+.legal a{color:var(--teal)}
+.legal table{width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0}
+.legal th,.legal td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;color:var(--text-2)}
+.legal th{color:var(--text);background:var(--bg-surface)}
+.legal .table-wrap{overflow-x:auto}
+.legal mark.todo{background:#6B1A34;color:#fff;padding:0 4px;border-radius:4px}
+html[data-lang="es"] [lang="en"],html[data-lang="en"] [lang="es"]{display:none}

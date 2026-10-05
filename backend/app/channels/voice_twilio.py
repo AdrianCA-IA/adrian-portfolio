@@ -30,6 +30,7 @@ from twilio.twiml.voice_response import Connect, Gather, VoiceResponse
 
 from ..agent.agent import run_agent
 from ..core.config import get_settings
+from ..core.legal import VOICE_NOTICE
 from ..core.ratelimit import check_rate_limit
 from ..data import load_cv_context
 
@@ -43,9 +44,9 @@ _HISTORY_TURNS = 10
 
 # Locuciones fijas por idioma. El resto lo genera el agente.
 GREET = {
-    "es": ("Hola, soy el asistente de voz de Adrián Cajas. Puedes preguntarme por su "
+    "es": ("Hola, soy el asistente de voz de Adrián Cajas. " + VOICE_NOTICE["es"] + " Puedes preguntarme por su "
            "experiencia, sus proyectos o su stack. ¿Qué te gustaría saber?"),
-    "en": ("Hi, I'm Adrián Cajas' voice assistant. You can ask me about his experience, "
+    "en": ("Hi, I'm Adrián Cajas' voice assistant. " + VOICE_NOTICE["en"] + " You can ask me about his experience, "
            "his projects or his tech stack. What would you like to know?"),
 }
 BYE = {
@@ -270,7 +271,8 @@ def _voice_instructions() -> str:
         "(adriancajasalmachi arroba gmail punto com).\n"
         "- Termina a menudo con una pregunta corta para mantener la conversación.\n"
         "- AL EMPEZAR LA LLAMADA saluda tú primero, breve y cálido, en español (preséntate como el "
-        "asistente de voz de Adrián y pregunta en qué puedes ayudar).\n\n"
+        "asistente de voz de Adrián, di SIEMPRE que eres una inteligencia artificial y que no se "
+        "graba la llamada, y pregunta en qué puedes ayudar).\n\n"
         f"CONTEXTO (CV de Adrián, fuente de verdad):\n{cv}"
     )
 
